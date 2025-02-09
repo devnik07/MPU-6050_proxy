@@ -14,6 +14,7 @@ int16_t gyX, gyY, gyZ;
 float rateRoll, ratePitch, rateYaw;
 
 float gyroXOffset = 0, gyroYOffset = 0, gyroZOffset = 0;
+float accXOffset = 0, accYOffset = 0, accZOffset = 0;
 
 bool calibrated = false;
 
@@ -27,6 +28,7 @@ void record_gyro_data();
 void process_accel_data();
 void process_gyro_data();
 void calibrate_gyro();
+void calibrate_acc();
 void print_measurements();
 void plot_gyro_rates();
 
@@ -43,14 +45,16 @@ void setup() {
   accel_config();
 
   calibrate_gyro();
+  calibrate_acc();
+  calibrated = true;
 }
 
 void loop() {
   record_accel_data();
   record_gyro_data();
 
-  //print_measurements();
-  plot_gyro_rates();
+  print_measurements();
+  //plot_gyro_rates();
   delay(LOOP_DELAY);
 }
 
@@ -230,6 +234,12 @@ void process_accel_data() {
   gForceX = (float)(acX) / lsb_sens;
   gForceY = (float)(acY) / lsb_sens;
   gForceZ = (float)(acZ) / lsb_sens;
+
+  if (calibrated) {
+    gForceX -= accXOffset;
+    gForceY -= accYOffset;
+    gForceZ -= accZOffset;
+  }
 }
 
 /* Gyroscope Measurements Section 4.19 in the Register Map datasheet
@@ -310,8 +320,30 @@ void calibrate_gyro() {
   gyroYOffset /= numSamples;
   gyroZOffset /= numSamples;
 
-  calibrated = true;
   Serial.println("Gyroscope Calibration completed.");
+}
+
+/*
+  Compute offset values for the Accelerometer.
+*/
+void calibrate_acc() {
+  Serial.println("Calibrating Accelerometer ...");
+
+  int numSamples = 2000;
+
+  for (int i = 0; i < numSamples; i++) {
+    record_accel_data();
+    accXOffset += gForceX;
+    accYOffset += gForceY;
+    accZOffset += gForceZ;
+    delay(1);
+  }
+
+  accXOffset /= numSamples;
+  accYOffset /= numSamples;
+  accZOffset = (accZOffset / numSamples) - 1;
+
+  Serial.println("Accelerometer Calibration completed.");
 }
 
 void print_measurements() {
