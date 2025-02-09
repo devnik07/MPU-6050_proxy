@@ -18,6 +18,8 @@ float accXOffset = 0, accYOffset = 0, accZOffset = 0;
 
 bool calibrated = false;
 
+float accRoll, accPitch;
+
 void write_to(byte address, byte value);
 void wake_up();
 void set_low_pass_filter();
@@ -32,6 +34,7 @@ void calibrate_acc();
 void print_measurements();
 void plot_gyro_rates();
 
+void print_acc_rp();
 
 
 void setup() {
@@ -53,8 +56,13 @@ void loop() {
   record_accel_data();
   record_gyro_data();
 
-  print_measurements();
+  accRoll = atan(gForceY / sqrt(pow(gForceX, 2) + pow(gForceZ, 2))) * 180/PI;
+  accPitch = atan(-gForceX / sqrt(pow(gForceY, 2) + pow(gForceZ, 2))) * 180/PI;
+
+  //print_measurements();
   //plot_gyro_rates();
+  print_acc_rp(); 
+
   delay(LOOP_DELAY);
 }
 
@@ -376,4 +384,10 @@ void plot_gyro_rates() {
   Serial.println(rateYaw);
 }
 
-
+void print_acc_rp() {
+  Serial.print("Roll:");
+  Serial.print(accRoll);
+  Serial.print(",");
+  Serial.print("Pitch:");
+  Serial.println(accPitch);
+}
