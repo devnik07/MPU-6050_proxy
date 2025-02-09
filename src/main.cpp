@@ -19,6 +19,9 @@ float accXOffset = 0, accYOffset = 0, accZOffset = 0;
 bool calibrated = false;
 
 float roll_acc, pitch_acc;
+float roll_gyro = 0, pitch_gyro = 0, yaw_gyro = 0;
+
+float prev_time = 0, curr_time = 0, delta_time = 0;
 
 void write_to(byte address, byte value);
 void wake_up();
@@ -35,6 +38,7 @@ void print_measurements();
 void plot_gyro_rates();
 
 void print_acc_rp();
+void print_gyro_rpy();
 
 
 void setup() {
@@ -56,12 +60,21 @@ void loop() {
   record_accel_data();
   record_gyro_data();
 
-  roll_acc = atan(gForceY / sqrt(pow(gForceX, 2) + pow(gForceZ, 2))) * 180/PI;
-  pitch_acc = atan(-gForceX / sqrt(pow(gForceY, 2) + pow(gForceZ, 2))) * 180/PI;
+  //roll_acc = atan(gForceY / sqrt(pow(gForceX, 2) + pow(gForceZ, 2))) * 180/PI;
+  //pitch_acc = atan(-gForceX / sqrt(pow(gForceY, 2) + pow(gForceZ, 2))) * 180/PI;
+
+  curr_time = millis();
+  delta_time = (curr_time - prev_time) / 1000.0;
+  prev_time = curr_time;
+
+  roll_gyro = roll_gyro + rateRoll * delta_time;
+  pitch_gyro = pitch_gyro + ratePitch * delta_time;
+  yaw_gyro = yaw_gyro + rateYaw * delta_time;
 
   //print_measurements();
   //plot_gyro_rates();
-  print_acc_rp(); 
+  //print_acc_rp(); 
+  print_gyro_rpy();
 
   delay(LOOP_DELAY);
 }
@@ -390,4 +403,15 @@ void print_acc_rp() {
   Serial.print(",");
   Serial.print("Pitch:");
   Serial.println(pitch_acc);
+}
+
+void print_gyro_rpy() {
+  Serial.print("Roll:");
+  Serial.print(roll_gyro);
+  Serial.print(",");
+  Serial.print("Pitch:");
+  Serial.print(pitch_gyro);
+  Serial.print(",");
+  Serial.print("Yaw:");
+  Serial.println(yaw_gyro);
 }
