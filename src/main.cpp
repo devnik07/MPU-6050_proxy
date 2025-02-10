@@ -6,6 +6,7 @@ const int LOOP_DELAY = 333;
 const int DLPF_CFG = 0;                 // Digital Low Pass Filter Configuration (values: 0-6)           
 const int GY_RANGE = 0;                 // Full Scale Range of Gyroscope Outputs (values: 0-3)
 const int AC_RANGE = 0;                 // Full Scale Range of Accelerometer Outputs (values: 0-3)
+const float ALPHA_LPF = 0.8;
 
 int16_t acX, acY, acZ;
 float gForceX, gForceY, gForceZ;
@@ -18,7 +19,7 @@ float accXOffset = 0, accYOffset = 0, accZOffset = 0;
 
 bool calibrated = false;
 
-float roll_acc, pitch_acc;
+float roll_acc = 0, pitch_acc = 0;
 float roll_gyro = 0, pitch_gyro = 0, yaw_gyro = 0;
 
 float prev_time = 0, curr_time = 0, delta_time = 0;
@@ -32,6 +33,9 @@ void record_accel_data();
 void record_gyro_data();
 void process_accel_data();
 void process_gyro_data();
+void acc_rp();
+void acc_rp_lpf();
+void gyro_rpy();
 void calibrate_gyro();
 void calibrate_acc();
 void print_measurements();
@@ -60,16 +64,9 @@ void loop() {
   record_accel_data();
   record_gyro_data();
 
-  //roll_acc = atan(gForceY / sqrt(pow(gForceX, 2) + pow(gForceZ, 2))) * 180/PI;
-  //pitch_acc = atan(-gForceX / sqrt(pow(gForceY, 2) + pow(gForceZ, 2))) * 180/PI;
-
-  curr_time = millis();
-  delta_time = (curr_time - prev_time) / 1000.0;
-  prev_time = curr_time;
-
-  roll_gyro = roll_gyro + rateRoll * delta_time;
-  pitch_gyro = pitch_gyro + ratePitch * delta_time;
-  yaw_gyro = yaw_gyro + rateYaw * delta_time;
+  // acc_rp();
+  // gyro_rpy();
+  acc_rp_lpf();
 
   //print_measurements();
   //plot_gyro_rates();
@@ -319,6 +316,35 @@ void process_gyro_data() {
     ratePitch -= gyroYOffset;
     rateYaw -= gyroZOffset;
   }
+}
+
+/*
+  Default roll and pitch computations using only accelerometer.
+*/
+void acc_rp() {
+  roll_acc = atan(gForceY / sqrt(pow(gForceX, 2) + pow(gForceZ, 2))) * 180/PI;
+  pitch_acc = atan(-gForceX / sqrt(pow(gForceY, 2) + pow(gForceZ, 2))) * 180/PI;
+}
+
+/*
+  Low-pass filter roll and pitch computations using only accelerometer.
+*/
+void acc_rp_lpf() {
+  roll_acc = ALPHA_LPF * roll_acc + (1 - ALPHA_LPF) * atan(gForceY / sqrt(pow(gForceX, 2) + pow(gForceZ, 2))) * 180/PI;
+  pitch_acc = ALPHA_LPF * pitch_acc + (1 - ALPHA_LPF) * atan(-gForceX / sqrt(pow(gForceY, 2) + pow(gForceZ, 2))) * 180/PI;
+}
+
+/*
+  Default roll, pitch and yaw (rpy) computations using only gyroscope.
+*/
+void gyro_rpy() {
+  curr_time = millis();
+  delta_time = (curr_time - prev_time) / 1000.0;
+  prev_time = curr_time;
+
+  roll_gyro = roll_gyro + rateRoll * delta_time;
+  pitch_gyro = pitch_gyro + ratePitch * delta_time;
+  yaw_gyro = yaw_gyro + rateYaw * delta_time;
 }
 
 /*
