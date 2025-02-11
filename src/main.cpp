@@ -46,6 +46,7 @@ void plot_gyro_rates();
 
 void print_acc_rp();
 void print_gyro_rpy();
+void print_compl_filter_rpy();
 
 
 void setup() {
@@ -68,13 +69,15 @@ void loop() {
   record_gyro_data();
 
   // acc_rp();
-  gyro_rpy();
-  //acc_rp_lpf();
+  // gyro_rpy();
+  // acc_rp_lpf();
+  compl_filter_rpy();
 
   //print_measurements();
   //plot_gyro_rates();
   //print_acc_rp(); 
-  print_gyro_rpy();
+  //print_gyro_rpy();
+  print_compl_filter_rpy();
 
   delay(LOOP_DELAY);
 }
@@ -460,4 +463,15 @@ void print_gyro_rpy() {
   Serial.print(",");
   Serial.print("Yaw:");
   Serial.println(yaw_gyro);
+}
+
+void print_compl_filter_rpy() {
+  Serial.print("Roll:");
+  Serial.print(roll_compl);
+  Serial.print(",");
+  Serial.print("Pitch:");
+  Serial.print(pitch_compl);
+  Serial.print(",");
+  Serial.print("Yaw:");
+  Serial.println(yaw_compl);
 }
