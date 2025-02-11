@@ -7,6 +7,7 @@ const int DLPF_CFG = 0;                 // Digital Low Pass Filter Configuration
 const int GY_RANGE = 0;                 // Full Scale Range of Gyroscope Outputs (values: 0-3)
 const int AC_RANGE = 0;                 // Full Scale Range of Accelerometer Outputs (values: 0-3)
 const float ALPHA_LPF = 0.8;
+const float ALPHA_COMPL_FILTER = 0.9;
 
 int16_t acX, acY, acZ;
 float gForceX, gForceY, gForceZ;
@@ -21,6 +22,7 @@ bool calibrated = false;
 
 float roll_acc = 0, pitch_acc = 0;
 float roll_gyro = 0, pitch_gyro = 0, yaw_gyro = 0;
+float roll_compl = 0, pitch_compl = 0, yaw_compl = 0;
 
 float prev_time = 0, curr_time = 0, delta_time = 0;
 
@@ -36,6 +38,7 @@ void process_gyro_data();
 void acc_rp();
 void acc_rp_lpf();
 void gyro_rpy();
+void compl_filter_rpy();
 void calibrate_gyro();
 void calibrate_acc();
 void print_measurements();
@@ -345,6 +348,23 @@ void gyro_rpy() {
   roll_gyro = roll_gyro + rateRoll * delta_time;
   pitch_gyro = pitch_gyro + ratePitch * delta_time;
   yaw_gyro = yaw_gyro + rateYaw * delta_time;
+}
+
+/*
+  Complementary filter roll, pitch and yaw computations using sensor fusion
+  of gyroscope and accelerometer measurements.
+*/
+void compl_filter_rpy() {
+  acc_rp();
+  curr_time = millis();
+  delta_time = (curr_time - prev_time) / 1000.0;
+  prev_time = curr_time;
+
+  roll_compl = ALPHA_COMPL_FILTER * (roll_compl + rateRoll * delta_time);
+  roll_compl += (1 - ALPHA_COMPL_FILTER) * roll_acc;
+  pitch_compl = ALPHA_COMPL_FILTER * (pitch_compl + ratePitch * delta_time);
+  pitch_compl += (1 - ALPHA_COMPL_FILTER) * pitch_acc;
+  yaw_compl += rateYaw * delta_time;
 }
 
 /*
