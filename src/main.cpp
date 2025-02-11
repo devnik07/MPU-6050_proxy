@@ -68,8 +68,8 @@ void loop() {
   record_gyro_data();
 
   // acc_rp();
-  // gyro_rpy();
-  acc_rp_lpf();
+  gyro_rpy();
+  //acc_rp_lpf();
 
   //print_measurements();
   //plot_gyro_rates();
@@ -345,9 +345,9 @@ void gyro_rpy() {
   delta_time = (curr_time - prev_time) / 1000.0;
   prev_time = curr_time;
 
-  roll_gyro = roll_gyro + rateRoll * delta_time;
-  pitch_gyro = pitch_gyro + ratePitch * delta_time;
-  yaw_gyro = yaw_gyro + rateYaw * delta_time;
+  roll_gyro += rateRoll * delta_time;
+  pitch_gyro += ratePitch * delta_time;
+  yaw_gyro += rateYaw * delta_time;
 }
 
 /*
