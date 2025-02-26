@@ -11,15 +11,31 @@ void MPU6050Reader::init() {
     #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
         Fastwire::setup(400, true);
     #endif
+
+    Serial.println(F("Initializing I2C devices..."));
     mpu.initialize();
 
+    /*Wait for Serial input*/
+    Serial.println(F("\nSend any character to begin: "));
+    while (Serial.available() && Serial.read()); // Empty buffer
+    while (!Serial.available());                 // Wait for data
+    while (Serial.available() && Serial.read()); // Empty buffer again
+
     /* Initialize and configure the DMP */
+    Serial.println(F("Initializing DMP..."));
     devStatus = mpu.dmpInitialize();
     setStartingOffsets();
     if (devStatus == 0) {
         mpu.CalibrateAccel(6);
         mpu.CalibrateGyro(6);
+        Serial.println(F("Enabling DMP..."));
         mpu.setDMPEnabled(true);
+    } else {
+        Serial.print(F("DMP Initialization failed (code ")); //Print the error code
+        Serial.print(devStatus);
+        Serial.println(F(")"));
+        // 1 = initial memory load failed
+        // 2 = DMP configuration updates failed
     }
 }
 
