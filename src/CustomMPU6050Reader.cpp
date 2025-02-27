@@ -11,6 +11,7 @@ CustomMPU6050Reader::CustomMPU6050Reader(ComputationOption compOpt) : computatio
   accYOffset = 0;
   accZOffset = 0;
   calibrated = false;
+  prevTime = 0;
 }
 
 void CustomMPU6050Reader::init() {
@@ -24,12 +25,11 @@ void CustomMPU6050Reader::init() {
   calibrateGyro();
   calibrateAccel();
   calibrated = true;
+  prevTime = millis();
 }
 
 void CustomMPU6050Reader::getRollPitchYaw(float& r, float& p, float& y) {
   float gForceX, gForceY, gForceZ, rateRoll, ratePitch, rateYaw;
-  float curr_time, delta_time;
-  float prev_time = 0;
 
   recordAccelData(gForceX, gForceY, gForceZ);
   recordGyroData(rateRoll, ratePitch, rateYaw);
@@ -42,13 +42,11 @@ void CustomMPU6050Reader::getRollPitchYaw(float& r, float& p, float& y) {
       computeAccLpfRP(r, p, gForceX, gForceY, gForceZ);
       break;
     case ComputationOption::GYRO_RPY:
-      computeGyroRPY(r, p, y, rateRoll, ratePitch, rateYaw,
-                     curr_time, delta_time, prev_time);
+      computeGyroRPY(r, p, y, rateRoll, ratePitch, rateYaw);
       break;
     case ComputationOption::COMPL_RPY:
       computeComplRPY(r, p, y, gForceX, gForceY, gForceZ,
-                      rateRoll, ratePitch, rateYaw,
-                      curr_time, delta_time, prev_time);
+                      rateRoll, ratePitch, rateYaw);
       break;
     default:
       Serial.println("ERROR: Unexpected computation option");
@@ -372,15 +370,14 @@ void CustomMPU6050Reader::computeAccLpfRP(float& r, float& p, float gForceX, flo
   Default roll, pitch and yaw (rpy) computations using only gyroscope.
 */
 void CustomMPU6050Reader::computeGyroRPY(float& r, float& p, float& y,
-                                         float rateRoll, float ratePitch, float rateYaw,
-                                         float& curr_time, float& delta_time, float& prev_time) {
-  curr_time = millis();
-  delta_time = (curr_time - prev_time) / 1000.0;
-  prev_time = curr_time;
+                                         float rateRoll, float ratePitch, float rateYaw) {
+  float currTime = millis();
+  float deltaTime = (currTime - prevTime) / 1000.0;
+  prevTime = currTime;
 
-  r += rateRoll * delta_time;
-  p += ratePitch * delta_time;
-  y += rateYaw * delta_time;
+  r += rateRoll * deltaTime;
+  p += ratePitch * deltaTime;
+  y += rateYaw * deltaTime;
 }
 
 /*
@@ -389,17 +386,16 @@ void CustomMPU6050Reader::computeGyroRPY(float& r, float& p, float& y,
 */
 void CustomMPU6050Reader::computeComplRPY(float& r, float& p, float& y,
                                           float gForceX, float gForceY, float gForceZ,
-                                          float rateRoll, float ratePitch, float rateYaw,
-                                          float& curr_time, float& delta_time, float& prev_time) {
+                                          float rateRoll, float ratePitch, float rateYaw) {
   float accRoll, accPitch;
   computeAccRP(accRoll, accPitch, gForceX, gForceY, gForceZ);
-  curr_time = millis();
-  delta_time = (curr_time - prev_time) / 1000.0;
-  prev_time = curr_time;
+  float currTime = millis();
+  float deltaTime = (currTime - prevTime) / 1000.0;
+  prevTime = currTime;
 
-  r = ALPHA_COMPL_FILTER * (r + rateRoll * delta_time);
+  r = ALPHA_COMPL_FILTER * (r + rateRoll * deltaTime);
   r += (1 - ALPHA_COMPL_FILTER) * accRoll;
-  p = ALPHA_COMPL_FILTER * (p + ratePitch * delta_time);
+  p = ALPHA_COMPL_FILTER * (p + ratePitch * deltaTime);
   p += (1 - ALPHA_COMPL_FILTER) * accPitch;
-  y += rateYaw * delta_time;
+  y += rateYaw * deltaTime;
 }

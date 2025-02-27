@@ -23,6 +23,7 @@ class CustomMPU6050Reader : public IMUReader {
         float gyroXOffset, gyroYOffset, gyroZOffset;
         float accXOffset, accYOffset, accZOffset;
         bool calibrated;
+        float prevTime;
         const ComputationOption computationOption;
 
     public:
@@ -49,10 +50,8 @@ class CustomMPU6050Reader : public IMUReader {
         void computeAccLpfRP(float& r, float& p,
                              float gForceX, float gForceY, float gForceZ);
         void computeGyroRPY(float& r, float& p, float& y,
-                            float rateRoll, float ratePitch, float rateYaw,
-                            float& curr_time, float& delta_time, float& prev_time);  
+                            float rateRoll, float ratePitch, float rateYaw);  
         void computeComplRPY(float& r, float& p, float& y,
                             float gForceX, float gForceY, float gForceZ,
-                            float rateRoll, float ratePitch, float rateYaw,
-                            float& curr_time, float& delta_time, float& prev_time);  
+                            float rateRoll, float ratePitch, float rateYaw);  
 };
