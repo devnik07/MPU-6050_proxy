@@ -16,9 +16,11 @@ CustomMPU6050Reader::CustomMPU6050Reader(ComputationOption compOpt) : computatio
 void CustomMPU6050Reader::init() {
   Wire.begin();
   wakeUp();
+
   setLowPassFilter();
   gyroConfig();
   accelConfig();
+
   calibrateGyro();
   calibrateAccel();
   calibrated = true;
@@ -54,7 +56,7 @@ void CustomMPU6050Reader::getRollPitchYaw(float& r, float& p, float& y) {
   }
 }
 
-/*! Power Management 1 Section 4.28 in Register Map datasheet
+/* Power Management 1 Section 4.28 in Register Map datasheet
     Wakes up the MPU-6050 from sleep mode
 */
 void CustomMPU6050Reader::wakeUp() {
@@ -69,7 +71,7 @@ void CustomMPU6050Reader::writeTo(uint8_t address, uint8_t value) {
   Wire.endTransmission(true);
 }
 
-/*! Configuration Section 4.3 in Register Map datasheet
+/* Configuration Section 4.3 in Register Map datasheet
     Register  Bit 7   Bit 6   Bit 5  Bit 4  Bit 3     Bit 2   Bit 1   Bit 0
    |   1A   |   -   |   -   |     EXT_SYNC_SET    |         DLPF_CFG        |
    (We're only interested in setting the DLPF_CFG [Digital Low Pass Filter Config])
@@ -114,7 +116,7 @@ void CustomMPU6050Reader::setLowPassFilter() {
   }
 }
 
-/*! Gyroscope Configuration Section 4.4 in Register Map datasheet
+/* Gyroscope Configuration Section 4.4 in Register Map datasheet
     Register  Bit 7   Bit 6   Bit 5     Bit 4  Bit 3     Bit 2   Bit 1   Bit 0
    |   1B   | XG_ST | YG_ST | ZG_ST | Full Scale Range |   -   |   -   |   -   |
    |        |       |       |       |   Select FS_SEL  |       |       |       |
@@ -148,7 +150,7 @@ void CustomMPU6050Reader::gyroConfig() {
   }
 }
 
-/*! Accelerometer Configuration Section 4.5 in the Register Map datasheet
+/* Accelerometer Configuration Section 4.5 in the Register Map datasheet
     Register  Bit 7   Bit 6   Bit 5     Bit 4  Bit 3     Bit 2   Bit 1   Bit 0
    |   1C   | XA_ST | YA_ST | ZA_ST | Full Scale Range |   -   |   -   |   -   |
    |        |       |       |       |  Select AFS_SEL  |       |       |       |
@@ -180,10 +182,12 @@ void CustomMPU6050Reader::accelConfig() {
   }
 }
 
-/*!
+/*
   Computes offset values for the Gyroscope.
 */
 void CustomMPU6050Reader::calibrateGyro() {
+  Serial.println("Calibrating Gyroscope ...");
+
   int numSamples = 2000;
   float rateRoll, ratePitch, rateYaw;
 
@@ -198,12 +202,16 @@ void CustomMPU6050Reader::calibrateGyro() {
   gyroXOffset /= numSamples;
   gyroYOffset /= numSamples;
   gyroZOffset /= numSamples;
+
+  Serial.println("Gyroscope Calibration completed.");
 }
 
-/*!
+/*
   Compute offset values for the Accelerometer.
 */
 void CustomMPU6050Reader::calibrateAccel() {
+  Serial.println("Calibrating Accelerometer ...");
+
   int numSamples = 2000;
   float gForceX, gForceY, gForceZ;
 
@@ -218,14 +226,16 @@ void CustomMPU6050Reader::calibrateAccel() {
   accXOffset /= numSamples;
   accYOffset /= numSamples;
   accZOffset = (accZOffset / numSamples) - 1;
+
+  Serial.println("Accelerometer Calibration completed.");
 }
 
-/*! Gyroscope Measurements Section 4.19 in the Register Map datasheet
+/* Gyroscope Measurements Section 4.19 in the Register Map datasheet
     Measurements are stored in registers 43 - 48.
     Note: each measurement is broken up into High and Low bytes.
 */
 void CustomMPU6050Reader::recordGyroData(float& rateRoll, float& ratePitch, float& rateYaw) {
-  uint16_t gyX, gyY, gyZ;
+  int16_t gyX, gyY, gyZ;
 
   Wire.beginTransmission(MPU_ADDR);
   Wire.write(0x43);                     // starting with register 0x43
@@ -238,7 +248,7 @@ void CustomMPU6050Reader::recordGyroData(float& rateRoll, float& ratePitch, floa
   processGyroData(rateRoll, ratePitch, rateYaw, gyX, gyY, gyZ);
 }
 
-/*! Conversion of the raw Gyroscope measurements into exerted roll, pitch and yaw rates
+/* Conversion of the raw Gyroscope measurements into exerted roll, pitch and yaw rates
     Section 4.19 Gyroscope Measurements
      
      FS_SEL   Full Scale Range    LSB Sensitivity
@@ -250,7 +260,7 @@ void CustomMPU6050Reader::recordGyroData(float& rateRoll, float& ratePitch, floa
     --> Note: directional rotational force [°/s] = gyX/LSB Sensitivity
 */
 void CustomMPU6050Reader::processGyroData(float& rateRoll, float& ratePitch, float& rateYaw,
-                                          uint16_t gyX, uint16_t gyY, uint16_t gyZ) {
+                                          int16_t gyX, int16_t gyY, int16_t gyZ) {
   float lsb_sens;
 
   switch (GY_RANGE) {
@@ -281,12 +291,12 @@ void CustomMPU6050Reader::processGyroData(float& rateRoll, float& ratePitch, flo
   }
 }
 
-/*! Accelerometer Measurements Section 4.17 in the Register Map datasheet
+/* Accelerometer Measurements Section 4.17 in the Register Map datasheet
     Measurements are stored in registers 3B - 40.
     Note: each measurement is broken up into High and Low bytes.
 */
 void CustomMPU6050Reader::recordAccelData(float& gForceX, float& gForceY, float& gForceZ) {
-  uint16_t acX, acY, acZ;
+  int16_t acX, acY, acZ;
 
   Wire.beginTransmission(MPU_ADDR);
   Wire.write(0x3B);                     // starting with register 0x3B (ACCEL_XOUT_H)
@@ -299,7 +309,7 @@ void CustomMPU6050Reader::recordAccelData(float& gForceX, float& gForceY, float&
   processAccelData(gForceX, gForceY, gForceZ, acX, acY, acZ);
 }
 
-/*! Conversion of the raw Accelerometer measurements into exerted g forces
+/* Conversion of the raw Accelerometer measurements into exerted g forces
     Section 4.17 Accelerometer Measurements
      
     AFS_SEL   Full Scale Range   LSB Sensitivity
@@ -311,7 +321,7 @@ void CustomMPU6050Reader::recordAccelData(float& gForceX, float& gForceY, float&
     --> Note: directional g force = acX/LSB Sensitivity
 */
 void CustomMPU6050Reader::processAccelData(float& gForceX, float& gForceY, float& gForceZ,
-                                           uint16_t acX, uint16_t acY, uint16_t acZ) {
+                                           int16_t acX, int16_t acY, int16_t acZ) {
   float lsb_sens;
 
   switch (AC_RANGE) {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IMUReader.h"
-#include <stdlib.h>
+#include <stdint.h>
 
 const int MPU_ADDR = 0x68;              // I2C address of the MPU-6050
 const int DLPF_CFG = 0;                 // Digital Low Pass Filter Configuration (values: 0-6)           
@@ -41,9 +41,9 @@ class CustomMPU6050Reader : public IMUReader {
         void recordGyroData(float& rateRoll, float& ratePitch, float& rateYaw);
         void recordAccelData(float& gForceX, float& gForceY, float& gForceZ);
         void processGyroData(float& rateRoll, float& ratePitch, float& rateYaw,
-                             uint16_t gyX, uint16_t gyY, uint16_t gyZ);
+                             int16_t gyX, int16_t gyY, int16_t gyZ);
         void processAccelData(float& gForceX, float& gForceY, float& gForceZ,
-                              uint16_t acX, uint16_t acY, uint16_t acZ);
+                              int16_t acX, int16_t acY, int16_t acZ);
         void computeAccRP(float& r, float& p,
                           float gForceX, float gForceY, float gForceZ);
         void computeAccLpfRP(float& r, float& p,
