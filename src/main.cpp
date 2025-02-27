@@ -10,7 +10,7 @@
 
 void printRPY();
 
-const int LOOP_DELAY = 333;
+const int LOOP_DELAY = 100;
 
 #ifdef USE_CUSTOM_READER
   const ComputationOption compOpt = ComputationOption::COMPL_RPY;
@@ -23,7 +23,7 @@ const int LOOP_DELAY = 333;
 float roll = 0, pitch = 0, yaw = 0;
 
 void setup() {
-  Serial.begin(9600); // starts serial monitor
+  Serial.begin(115200); // starts serial monitor
   reader.init();
 }
 
@@ -34,12 +34,12 @@ void loop() {
 }
 
 void printRPY() {
-  Serial.print("Roll:");
+  //Serial.print("Roll:");
   Serial.print(roll);
   Serial.print(",");
-  Serial.print("Pitch:");
+  //Serial.print("Pitch:");
   Serial.print(pitch);
   Serial.print(",");
-  Serial.print("Yaw:");
+  //Serial.print("Yaw:");
   Serial.println(yaw);
 }

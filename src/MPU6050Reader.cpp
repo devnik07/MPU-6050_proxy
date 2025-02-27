@@ -16,10 +16,10 @@ void MPU6050Reader::init() {
     mpu.initialize();
 
     /*Wait for Serial input*/
-    Serial.println(F("\nSend any character to begin: "));
+    /*Serial.println(F("\nSend any character to begin: "));
     while (Serial.available() && Serial.read()); // Empty buffer
     while (!Serial.available());                 // Wait for data
-    while (Serial.available() && Serial.read()); // Empty buffer again
+    while (Serial.available() && Serial.read()); // Empty buffer again*/
 
     /* Initialize and configure the DMP */
     Serial.println(F("Initializing DMP..."));
