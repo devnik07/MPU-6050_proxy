@@ -5,6 +5,10 @@ import numpy as np
 import serial
 
 
+def rodrigues_rotation(v, k, angle):
+    return v*cos(angle) + cross(k, v)*sin(angle)
+
+
 def main():
     arduino_serial = serial.Serial('com3', 115200)
     time.sleep(1)
@@ -24,9 +28,9 @@ def main():
     yarrow = arrow(length=10, shaftwidth=.1, color=color.green, axis=vector(0, 1, 0))
     zarrow = arrow(length=10, shaftwidth=.1, color=color.blue, axis=vector(0, 0, 1))
 
-    front_arrow = arrow(length=10, shaftwidth=.1, color=color.purple, axis=vector(1, 0, 0))
-    up_arrow = arrow(length=8, shaftwidth=.1, color=color.magenta, axis=vector(0, 1, 0))
-    side_arrow = arrow(length=11, shaftwidth=.1, color=color.orange, axis=vector(0, 0, 1))
+    front_arrow = arrow(length=8, shaftwidth=.1, color=color.purple, axis=vector(1, 0, 0))
+    up_arrow = arrow(length=6, shaftwidth=.1, color=color.magenta, axis=vector(0, 1, 0))
+    side_arrow = arrow(length=9, shaftwidth=.1, color=color.orange, axis=vector(0, 0, 1))
 
     arduino = box(length=5, width=6, height=1.5, pos=vector(0, 0, 0),
                   color=color.blue, opacity=.8)
@@ -52,21 +56,22 @@ def main():
             angles.text = f'roll: {round(roll*to_deg)}\npitch: {round(pitch*to_deg)}\nyaw: {round(yaw*to_deg)}'
 
             rate(50)
-            k = vector(cos(-yaw) * cos(-pitch), sin(-pitch), sin(-yaw) * cos(-pitch))
+            k = vector(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch))
 
             y = vector(0, 1, 0)
             s = cross(k, y)
             v = cross(s, k)
+            v_rotated = rodrigues_rotation(v, k, roll)
 
             front_arrow.axis = k
             front_arrow.length = 8
-            side_arrow.axis = s
+            side_arrow.axis = cross(k, v_rotated)
             side_arrow.length = 9
-            up_arrow.axis = v
+            up_arrow.axis = v_rotated
             up_arrow.length = 6
 
             controller.axis = k
-            controller.up = v
+            controller.up = v_rotated
         except:
             pass
 
