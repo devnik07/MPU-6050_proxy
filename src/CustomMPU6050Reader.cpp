@@ -354,16 +354,16 @@ void CustomMPU6050Reader::processAccelData(float& gForceX, float& gForceY, float
   Default roll and pitch computations using only accelerometer.
 */
 void CustomMPU6050Reader::computeAccRP(float& r, float& p, float gForceX, float gForceY, float gForceZ) {
-  r = atan(gForceY / sqrt(pow(gForceX, 2) + pow(gForceZ, 2))) * 180/PI;
-  p = atan(-gForceX / sqrt(pow(gForceY, 2) + pow(gForceZ, 2))) * 180/PI;
+  r = atan2(gForceY, sqrt(pow(gForceX, 2) + pow(gForceZ, 2))) * 180/PI;
+  p = atan2(gForceX, sqrt(pow(gForceY, 2) + pow(gForceZ, 2))) * 180/PI;
 }
 
 /*
   Low-pass filter roll and pitch computations using only accelerometer.
 */
 void CustomMPU6050Reader::computeAccLpfRP(float& r, float& p, float gForceX, float gForceY, float gForceZ) {
-  r = ALPHA_LPF * r + (1 - ALPHA_LPF) * atan(gForceY / sqrt(pow(gForceX, 2) + pow(gForceZ, 2))) * 180/PI;
-  p = ALPHA_LPF * p + (1 - ALPHA_LPF) * atan(-gForceX / sqrt(pow(gForceY, 2) + pow(gForceZ, 2))) * 180/PI;
+  r = ALPHA_LPF * r + (1 - ALPHA_LPF) * atan2(gForceY, sqrt(pow(gForceX, 2) + pow(gForceZ, 2))) * 180/PI;
+  p = ALPHA_LPF * p + (1 - ALPHA_LPF) * atan2(gForceX, sqrt(pow(gForceY, 2) + pow(gForceZ, 2))) * 180/PI;
 }
 
 /*
@@ -376,8 +376,8 @@ void CustomMPU6050Reader::computeGyroRPY(float& r, float& p, float& y,
   prevTime = currTime;
 
   r += rateRoll * deltaTime;
-  p += ratePitch * deltaTime;
-  y += rateYaw * deltaTime;
+  p += (-1) * ratePitch * deltaTime;
+  y += (-1) * rateYaw * deltaTime;
 }
 
 /*
@@ -395,7 +395,7 @@ void CustomMPU6050Reader::computeComplRPY(float& r, float& p, float& y,
 
   r = ALPHA_COMPL_FILTER * (r + rateRoll * deltaTime);
   r += (1 - ALPHA_COMPL_FILTER) * accRoll;
-  p = ALPHA_COMPL_FILTER * (p + ratePitch * deltaTime);
+  p = ALPHA_COMPL_FILTER * (p + (-1) * ratePitch * deltaTime);
   p += (1 - ALPHA_COMPL_FILTER) * accPitch;
-  y += rateYaw * deltaTime;
+  y += rateYaw * (-1)* deltaTime;
 }
