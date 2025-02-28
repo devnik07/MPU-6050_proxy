@@ -8,7 +8,7 @@ const int DLPF_CFG = 0;                 // Digital Low Pass Filter Configuration
 const int GY_RANGE = 0;                 // Full Scale Range of Gyroscope Outputs (values: 0-3)
 const int AC_RANGE = 0;                 // Full Scale Range of Accelerometer Outputs (values: 0-3)
 const float ALPHA_LPF = 0.8;
-const float ALPHA_COMPL_FILTER = 0.9;
+const float ALPHA_COMPL_FILTER = 0.95;
 
 /* Defines in which way roll, pitch and yaw are to be computed */
 enum class ComputationOption {

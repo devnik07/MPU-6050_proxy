@@ -51,7 +51,7 @@ void MPU6050Reader::getRollPitchYaw(float& r, float& p, float& y) {
         float q3 = q.z;
 
         float rr = asin(2*q2*q3 + 2*q0*q1);
-        float pr = atan2(-2*q1*q3 + 2*q0*q2, q3*q3 - q2*q2 - q1*q1 + q0*q0);
+        float pr = -atan2(-2*q1*q3 + 2*q0*q2, q3*q3 - q2*q2 - q1*q1 + q0*q0);
         float yr = -atan2(-2*q1*q2 + 2*q0*q3, q2*q2 - q3*q3 - q1*q1 + q0*q0);
 
         r = rr * 180/M_PI;
