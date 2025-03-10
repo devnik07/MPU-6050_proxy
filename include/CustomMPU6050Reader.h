@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IMUReader.h"
+#include "IIMUReader.h"
 #include <stdint.h>
 
 const int MPU_ADDR = 0x68;              // I2C address of the MPU-6050
@@ -18,7 +18,7 @@ enum class ComputationOption {
     COMPL_RPY /*!< Use sensor fusion to compute roll/pitch/yaw */
 };
 
-class CustomMPU6050Reader : public IMUReader {
+class CustomMPU6050Reader : public IIMUReader {
     private:
         float gyroXOffset, gyroYOffset, gyroZOffset;
         float accXOffset, accYOffset, accZOffset;

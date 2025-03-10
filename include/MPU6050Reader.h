@@ -1,10 +1,10 @@
 #pragma once
 
-#include "IMUReader.h"
+#include "IIMUReader.h"
 
 #include "MPU6050_6Axis_MotionApps20.h"
 
-class MPU6050Reader : public IMUReader {
+class MPU6050Reader : public IIMUReader {
     private:
         MPU6050& mpu;
         uint8_t FIFOBuffer[64];
