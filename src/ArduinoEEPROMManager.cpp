@@ -9,51 +9,51 @@ T ArduinoEEPROMManager::readVal(int address) {
     return val;
 }
 
-float ArduinoEEPROMManager::getXGyroOffset() {
-    return readVal<float>(ADDR_X_GYRO_OFFSET);
+int ArduinoEEPROMManager::getXGyroOffset() {
+    return readVal<int>(ADDR_X_GYRO_OFFSET);
 }
 
-float ArduinoEEPROMManager::getYGyroOffset() {
-    return readVal<float>(ADDR_Y_GYRO_OFFSET);
+int ArduinoEEPROMManager::getYGyroOffset() {
+    return readVal<int>(ADDR_Y_GYRO_OFFSET);
 }
 
-float ArduinoEEPROMManager::getZGyroOffset() {
-    return readVal<float>(ADDR_Z_GYRO_OFFSET);
+int ArduinoEEPROMManager::getZGyroOffset() {
+    return readVal<int>(ADDR_Z_GYRO_OFFSET);
 }
 
-float ArduinoEEPROMManager::getXAccOffset() {
-    return readVal<float>(ADDR_X_ACC_OFFSET);
+int ArduinoEEPROMManager::getXAccOffset() {
+    return readVal<int>(ADDR_X_ACC_OFFSET);
 }
 
-float ArduinoEEPROMManager::getYAccOffset() {
-    return readVal<float>(ADDR_Y_ACC_OFFSET);
+int ArduinoEEPROMManager::getYAccOffset() {
+    return readVal<int>(ADDR_Y_ACC_OFFSET);
 }
 
-float ArduinoEEPROMManager::getZAccOffset() {
-    return readVal<float>(ADDR_Z_ACC_OFFSET);
+int ArduinoEEPROMManager::getZAccOffset() {
+    return readVal<int>(ADDR_Z_ACC_OFFSET);
 }
 
-void ArduinoEEPROMManager::setXGyroOffset(float offset) {
+void ArduinoEEPROMManager::setXGyroOffset(int offset) {
     EEPROM.put(ADDR_X_GYRO_OFFSET, offset);
 }
 
-void ArduinoEEPROMManager::setYGyroOffset(float offset) {
+void ArduinoEEPROMManager::setYGyroOffset(int offset) {
     EEPROM.put(ADDR_Y_GYRO_OFFSET, offset);
 }
 
-void ArduinoEEPROMManager::setZGyroOffset(float offset) {
+void ArduinoEEPROMManager::setZGyroOffset(int offset) {
     EEPROM.put(ADDR_Z_GYRO_OFFSET, offset);
 }
 
-void ArduinoEEPROMManager::setXAccOffset(float offset) {
+void ArduinoEEPROMManager::setXAccOffset(int offset) {
     EEPROM.put(ADDR_X_ACC_OFFSET, offset);
 }
 
-void ArduinoEEPROMManager::setYAccOffset(float offset) {
+void ArduinoEEPROMManager::setYAccOffset(int offset) {
     EEPROM.put(ADDR_Y_ACC_OFFSET, offset);
 }
 
-void ArduinoEEPROMManager::setZAccOffset(float offset) {
+void ArduinoEEPROMManager::setZAccOffset(int offset) {
     EEPROM.put(ADDR_Z_ACC_OFFSET, offset);
 }
 

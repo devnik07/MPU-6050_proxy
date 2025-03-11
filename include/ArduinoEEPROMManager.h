@@ -16,19 +16,19 @@ class ArduinoEEPROMManager : public IeepromMPU {
         };
 
     public:
-        virtual float getXGyroOffset() override;
-        virtual float getYGyroOffset() override;
-        virtual float getZGyroOffset() override;
-        virtual float getXAccOffset() override;
-        virtual float getYAccOffset() override;
-        virtual float getZAccOffset() override;
+        virtual int getXGyroOffset() override;
+        virtual int getYGyroOffset() override;
+        virtual int getZGyroOffset() override;
+        virtual int getXAccOffset() override;
+        virtual int getYAccOffset() override;
+        virtual int getZAccOffset() override;
 
-        virtual void setXGyroOffset(float offset) override;
-        virtual void setYGyroOffset(float offset) override;
-        virtual void setZGyroOffset(float offset) override;
-        virtual void setXAccOffset(float offset) override;
-        virtual void setYAccOffset(float offset) override;
-        virtual void setZAccOffset(float offset) override;
+        virtual void setXGyroOffset(int offset) override;
+        virtual void setYGyroOffset(int offset) override;
+        virtual void setZGyroOffset(int offset) override;
+        virtual void setXAccOffset(int offset) override;
+        virtual void setYAccOffset(int offset) override;
+        virtual void setZAccOffset(int offset) override;
 
         virtual bool getCalibrationFlag() override;
         virtual void setCalibrationFlag() override;
