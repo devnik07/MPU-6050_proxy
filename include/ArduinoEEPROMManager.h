@@ -4,7 +4,7 @@
 
 class ArduinoEEPROMManager : public IeepromMPU {
     private:
-        const int ADDR_CALIBRATION_FLAG = 0;
+        const int16_t ADDR_CALIBRATION_FLAG = 0;
 
         enum OffsetAddr {
             ADDR_X_GYRO_OFFSET = 1,
@@ -16,19 +16,19 @@ class ArduinoEEPROMManager : public IeepromMPU {
         };
 
     public:
-        virtual int getXGyroOffset() override;
-        virtual int getYGyroOffset() override;
-        virtual int getZGyroOffset() override;
-        virtual int getXAccOffset() override;
-        virtual int getYAccOffset() override;
-        virtual int getZAccOffset() override;
+        virtual int16_t getXGyroOffset() override;
+        virtual int16_t getYGyroOffset() override;
+        virtual int16_t getZGyroOffset() override;
+        virtual int16_t getXAccOffset() override;
+        virtual int16_t getYAccOffset() override;
+        virtual int16_t getZAccOffset() override;
 
-        virtual void setXGyroOffset(int offset) override;
-        virtual void setYGyroOffset(int offset) override;
-        virtual void setZGyroOffset(int offset) override;
-        virtual void setXAccOffset(int offset) override;
-        virtual void setYAccOffset(int offset) override;
-        virtual void setZAccOffset(int offset) override;
+        virtual void setXGyroOffset(int16_t offset) override;
+        virtual void setYGyroOffset(int16_t offset) override;
+        virtual void setZGyroOffset(int16_t offset) override;
+        virtual void setXAccOffset(int16_t offset) override;
+        virtual void setYAccOffset(int16_t offset) override;
+        virtual void setZAccOffset(int16_t offset) override;
 
         virtual bool getCalibrationFlag() override;
         virtual void setCalibrationFlag() override;
