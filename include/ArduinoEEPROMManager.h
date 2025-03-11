@@ -8,11 +8,11 @@ class ArduinoEEPROMManager : public IeepromMPU {
 
         enum OffsetAddr {
             ADDR_X_GYRO_OFFSET = 1,
-            ADDR_Y_GYRO_OFFSET = 5,
-            ADDR_Z_GYRO_OFFSET = 9,
-            ADDR_X_ACC_OFFSET = 13,
-            ADDR_Y_ACC_OFFSET = 17,
-            ADDR_Z_ACC_OFFSET = 21
+            ADDR_Y_GYRO_OFFSET = 3,
+            ADDR_Z_GYRO_OFFSET = 5,
+            ADDR_X_ACC_OFFSET = 7,
+            ADDR_Y_ACC_OFFSET = 9,
+            ADDR_Z_ACC_OFFSET = 11
         };
 
     public:
