@@ -1,6 +1,9 @@
 #include <Arduino.h>
 
-#define USE_CUSTOM_READER
+#include <IeepromMPU.h>
+#include <ArduinoEEPROMManager.h>
+
+// #define USE_CUSTOM_READER
 
 #ifdef USE_CUSTOM_READER
   #include "CustomMPU6050Reader.h"
@@ -12,18 +15,25 @@ void printRPY();
 
 const int LOOP_DELAY = 100;
 
+ArduinoEEPROMManager arduinoManager;
+IeepromMPU& eepromManager = arduinoManager;
+
 #ifdef USE_CUSTOM_READER
   const ComputationOption compOpt = ComputationOption::COMPL_RPY;
   CustomMPU6050Reader reader(compOpt);
 #else
   MPU6050 mpu;
-  MPU6050Reader reader(mpu);
+  MPU6050Reader reader(eepromManager, mpu);
 #endif
 
 float roll = 0, pitch = 0, yaw = 0;
 
 void setup() {
-  Serial.begin(115200); // starts serial monitor
+  Serial.begin(9600); // starts serial monitor
+  while (!Serial);
+
+  //reader.resetCalibrationFlag();
+  //reader.calibrate();
   reader.init();
 }
 

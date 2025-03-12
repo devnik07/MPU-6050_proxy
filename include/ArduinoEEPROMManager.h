@@ -4,7 +4,7 @@
 
 class ArduinoEEPROMManager : public IeepromMPU {
     private:
-        const int16_t ADDR_CALIBRATION_FLAG = 0;
+        const int ADDR_CALIBRATION_FLAG = 0;
 
         enum OffsetAddr {
             ADDR_X_GYRO_OFFSET = 1,
