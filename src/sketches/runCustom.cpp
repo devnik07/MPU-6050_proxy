@@ -1,39 +1,24 @@
 #include <Arduino.h>
 
 #include "IConfig.h"
-
-// #define USE_CUSTOM_READER
-
-#ifdef USE_CUSTOM_READER
-  #include "CustomMPU6050Config.h"
-#else
-  #include "MPU6050Config.h"
-#endif
+#include "CustomMPU6050Config.h"
 
 void printRPY();
 
 const int LOOP_DELAY = 100;
 
-#ifdef USE_CUSTOM_READER
-  const ComputationOption compOpt = ComputationOption::COMPL_RPY;
-  CustomMPU6050Config mpuConfig(compOpt);
-#else
-  MPU6050 mpu;
-  MPU6050Config mpuConfig(mpu);
-#endif
-
+const ComputationOption compOpt = ComputationOption::COMPL_RPY;
+CustomMPU6050Config mpuConfig(compOpt);
 IConfig& config = mpuConfig;
 IIMUReader& reader = config.getReader();
 
 float roll = 0, pitch = 0, yaw = 0;
 
 void setup() {
-  Serial.begin(9600); // starts serial monitor
-  while (!Serial);
+    Serial.begin(9600);     // starts serial communication
+    while (!Serial);
 
-  //reader.resetCalibrationFlag();
-  //reader.calibrate();
-  reader.init();
+    reader.init();
 }
 
 void loop() {
