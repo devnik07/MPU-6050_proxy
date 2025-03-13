@@ -1,30 +1,29 @@
 #include <Arduino.h>
 
-#include <IeepromMPU.h>
-#include <ArduinoEEPROMManager.h>
+#include "IConfig.h"
 
-#define USE_CUSTOM_READER
+// #define USE_CUSTOM_READER
 
 #ifdef USE_CUSTOM_READER
-  #include "CustomMPU6050Reader.h"
+  #include "CustomMPU6050Config.h"
 #else
-  #include "MPU6050Reader.h"
+  #include "MPU6050Config.h"
 #endif
 
 void printRPY();
 
 const int LOOP_DELAY = 100;
 
-ArduinoEEPROMManager arduinoManager;
-IeepromMPU& eepromManager = arduinoManager;
-
 #ifdef USE_CUSTOM_READER
   const ComputationOption compOpt = ComputationOption::COMPL_RPY;
-  CustomMPU6050Reader reader(arduinoManager, compOpt);
+  CustomMPU6050Config mpuConfig(compOpt);
 #else
   MPU6050 mpu;
-  MPU6050Reader reader(eepromManager, mpu);
+  MPU6050Config mpuConfig(mpu);
 #endif
+
+IConfig& config = mpuConfig;
+IIMUReader& reader = config.getReader();
 
 float roll = 0, pitch = 0, yaw = 0;
 
