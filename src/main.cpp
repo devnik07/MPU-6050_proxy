@@ -3,7 +3,7 @@
 #include <IeepromMPU.h>
 #include <ArduinoEEPROMManager.h>
 
-// #define USE_CUSTOM_READER
+#define USE_CUSTOM_READER
 
 #ifdef USE_CUSTOM_READER
   #include "CustomMPU6050Reader.h"
@@ -20,7 +20,7 @@ IeepromMPU& eepromManager = arduinoManager;
 
 #ifdef USE_CUSTOM_READER
   const ComputationOption compOpt = ComputationOption::COMPL_RPY;
-  CustomMPU6050Reader reader(compOpt);
+  CustomMPU6050Reader reader(arduinoManager, compOpt);
 #else
   MPU6050 mpu;
   MPU6050Reader reader(eepromManager, mpu);

@@ -3,36 +3,35 @@
 #include <Wire.h>
 #include <Arduino.h>
 
-CustomMPU6050Reader::CustomMPU6050Reader(ComputationOption compOpt) : computationOption(compOpt) {
+CustomMPU6050Reader::CustomMPU6050Reader(IeepromMPU& ieepromManager, ComputationOption compOpt) 
+                                        : eepromManager(ieepromManager), computationOption(compOpt) {
   gyroXOffset = 0;
   gyroYOffset = 0;
   gyroZOffset = 0;
   accXOffset = 0;
   accYOffset = 0;
   accZOffset = 0;
-  calibrated = false;
   prevTime = 0;
 }
 
 void CustomMPU6050Reader::init() {
-  Wire.begin();
-  wakeUp();
+  setupMPU();
 
-  setLowPassFilter();
-  gyroConfig();
-  accelConfig();
+  if (isCalibrated()) {
+    loadCalibrationOffsets();
+    prevTime = millis();
+  } else {
+    Serial.println("MPU not calibrated. Stopping execution.");
+    while (true);   // Stop execution 
+  }
 
-  calibrateGyro();
-  calibrateAccel();
-  calibrated = true;
-  prevTime = millis();
 }
 
 void CustomMPU6050Reader::getRollPitchYaw(float& r, float& p, float& y) {
   float gForceX, gForceY, gForceZ, rateRoll, ratePitch, rateYaw;
 
-  recordAccelData(gForceX, gForceY, gForceZ);
-  recordGyroData(rateRoll, ratePitch, rateYaw);
+  recordAccelRates(gForceX, gForceY, gForceZ);
+  recordGyroRates(rateRoll, ratePitch, rateYaw);
 
   switch (computationOption) {
     case ComputationOption::ACC_RP:
@@ -54,6 +53,84 @@ void CustomMPU6050Reader::getRollPitchYaw(float& r, float& p, float& y) {
   }
 }
 
+void CustomMPU6050Reader::calibrate() {
+  Serial.println("Starting calibration.");
+
+  setupMPU();
+
+  calibrateGyro();
+  calibrateAccel();
+
+  // Save offsets
+  eepromManager.setXGyroOffset(gyroXOffset);
+  eepromManager.setYGyroOffset(gyroYOffset);
+  eepromManager.setZGyroOffset(gyroZOffset);
+        
+  eepromManager.setXAccOffset(accXOffset);
+  eepromManager.setYAccOffset(accYOffset);
+  eepromManager.setZAccOffset(accZOffset);
+
+  eepromManager.setCalibrationFlag();
+
+  Serial.println("Calibration completed.");
+}
+
+bool CustomMPU6050Reader::isCalibrated() {
+  return eepromManager.getCalibrationFlag();
+}
+
+void CustomMPU6050Reader::resetCalibrationFlag() {
+  eepromManager.resetCalibrationFlag();
+  Serial.println("Calibration flag reset.");
+}
+
+void CustomMPU6050Reader::loadCalibrationOffsets() {
+  Serial.println("Loading Calibration Offsets.");
+
+  gyroXOffset = eepromManager.getXGyroOffset();
+  gyroYOffset = eepromManager.getYGyroOffset();
+  gyroZOffset = eepromManager.getZGyroOffset();
+
+  accXOffset = eepromManager.getXAccOffset();
+  accYOffset = eepromManager.getYAccOffset();
+  accZOffset = eepromManager.getZAccOffset();
+
+  Serial.print("Acc X: ");
+  Serial.println(accXOffset);
+  Serial.print("Acc Y: ");
+  Serial.println(accYOffset);
+  Serial.print("Acc Z: ");
+  Serial.println(accZOffset);
+  Serial.print("Gyro X: ");
+  Serial.println(gyroXOffset);
+  Serial.print("Gyro Y: ");
+  Serial.println(gyroYOffset);
+  Serial.print("Gyro Z: ");
+  Serial.println(gyroZOffset);
+
+  Serial.println("Calibration Offsets loaded.");
+
+}
+
+/* Stores the given value in the register located at the given address 
+   using I2C data transmission.
+*/
+void CustomMPU6050Reader::writeTo(uint8_t address, uint8_t value) {
+  Wire.beginTransmission(MPU_ADDR);
+  Wire.write(address);
+  Wire.write(value);
+  Wire.endTransmission(true);
+}
+
+void CustomMPU6050Reader::setupMPU() {
+  Wire.begin();
+  wakeUp();
+
+  setLowPassFilter();
+  gyroConfig();
+  accelConfig();
+}
+
 /* Power Management 1 Section 4.28 in Register Map datasheet
     Wakes up the MPU-6050 from sleep mode
 */
@@ -61,13 +138,6 @@ void CustomMPU6050Reader::wakeUp() {
   writeTo(0x6B, 0x00);
 }
 
-void CustomMPU6050Reader::writeTo(uint8_t address, uint8_t value) {
-  // TODO: write documentation for this method
-  Wire.beginTransmission(MPU_ADDR);
-  Wire.write(address);
-  Wire.write(value);
-  Wire.endTransmission(true);
-}
 
 /* Configuration Section 4.3 in Register Map datasheet
     Register  Bit 7   Bit 6   Bit 5  Bit 4  Bit 3     Bit 2   Bit 1   Bit 0
@@ -121,11 +191,11 @@ void CustomMPU6050Reader::setLowPassFilter() {
    (Setting XG_ST, YG_ST or ZG_ST to 1 will perform a self test)
 
    Gyroscope Full Scale Range Selection:
-    FS_SEL   Full Scale Range
-   |   0   |   +/-  250 °/s   |
-   |   1   |   +/-  500 °/s   |
-   |   2   |   +/- 1000 °/s   |
-   |   3   |   +/- 2000 °/s   |
+    FS_SEL   Full Scale Range   LSB Sensitivity
+   |   0   |   +/-  250 °/s   |      131.0      |
+   |   1   |   +/-  500 °/s   |       65.5      |
+   |   2   |   +/- 1000 °/s   |       32.8      |
+   |   3   |   +/- 2000 °/s   |       16.4      |
 
    --> Note: FS_SEL/360 * 60sec/min = RotationValue in RPM (Rotations Per Minute)
 */
@@ -133,18 +203,23 @@ void CustomMPU6050Reader::gyroConfig() {
   switch (GY_RANGE) {
     case 0:
       writeTo(0x1B, 0x00);
+      gyroLSBSens = 131.0;
       break;
     case 1:
       writeTo(0x1B, 0x08);
+      gyroLSBSens = 65.5;
       break;
     case 2:
       writeTo(0x1B, 0x10);
+      gyroLSBSens = 32.8;
       break;
     case 3:
       writeTo(0x1B, 0x18);
+      gyroLSBSens = 16.4;
       break;
     default:
       writeTo(0x1B, 0x00);
+      gyroLSBSens = 131.0;
   }
 }
 
@@ -155,28 +230,33 @@ void CustomMPU6050Reader::gyroConfig() {
    (Setting XA_ST, YA_ST or ZA_ST to 1 will perform a self test)
 
    Accelerometer Full Scale Range Selection:
-    FS_SEL   Full Scale Range
-   |   0   |     +/-   2g     |
-   |   1   |     +/-   4g     |
-   |   2   |     +/-   8g     |
-   |   3   |     +/-  16g     |
+    FS_SEL   Full Scale Range   LSB Sensitivity
+   |   0   |     +/-   2g     |      16384      |
+   |   1   |     +/-   4g     |       8192      |
+   |   2   |     +/-   8g     |       4096      |
+   |   3   |     +/-  16g     |       2048      |
 */
 void CustomMPU6050Reader::accelConfig() {
   switch (AC_RANGE) {
     case 0:
       writeTo(0x1C, 0x00);
+      accLSBSens = 16384.0;
       break;
     case 1:
       writeTo(0x1C, 0x08);
+      accLSBSens = 8192.0;
       break;
     case 2:
       writeTo(0x1C, 0x10);
+      accLSBSens = 4096.0;
       break;
     case 3:
       writeTo(0x1C, 0x18);
+      accLSBSens = 2048.0;
       break;
     default:
       writeTo(0x1C, 0x00);
+      accLSBSens = 16384.0;
   }
 }
 
@@ -187,13 +267,13 @@ void CustomMPU6050Reader::calibrateGyro() {
   Serial.println("Calibrating Gyroscope ...");
 
   int numSamples = 2000;
-  float rateRoll, ratePitch, rateYaw;
+  int16_t gyX, gyY, gyZ;
 
   for (int i = 0; i < numSamples; i++) {
-    recordGyroData(rateRoll, ratePitch, rateYaw);
-    gyroXOffset += rateRoll;
-    gyroYOffset += ratePitch;
-    gyroZOffset += rateYaw;
+    readGyroData(gyX, gyY, gyZ);
+    gyroXOffset += gyX;
+    gyroYOffset += gyY;
+    gyroZOffset += gyZ;
     delay(1);
   }
 
@@ -211,19 +291,19 @@ void CustomMPU6050Reader::calibrateAccel() {
   Serial.println("Calibrating Accelerometer ...");
 
   int numSamples = 2000;
-  float gForceX, gForceY, gForceZ;
+  int16_t acX, acY, acZ;
 
   for (int i = 0; i < numSamples; i++) {
-    recordAccelData(gForceX, gForceY, gForceZ);
-    accXOffset += gForceX;
-    accYOffset += gForceY;
-    accZOffset += gForceZ;
+    readAccelData(acX, acY, acZ);
+    accXOffset += acX;
+    accYOffset += acY;
+    accZOffset += acZ;
     delay(1);
   }
 
   accXOffset /= numSamples;
   accYOffset /= numSamples;
-  accZOffset = (accZOffset / numSamples) - 1;
+  accZOffset = (accZOffset / numSamples) - accLSBSens;
 
   Serial.println("Accelerometer Calibration completed.");
 }
@@ -232,9 +312,7 @@ void CustomMPU6050Reader::calibrateAccel() {
     Measurements are stored in registers 43 - 48.
     Note: each measurement is broken up into High and Low bytes.
 */
-void CustomMPU6050Reader::recordGyroData(float& rateRoll, float& ratePitch, float& rateYaw) {
-  int16_t gyX, gyY, gyZ;
-
+void CustomMPU6050Reader::readGyroData(int16_t& gyX, int16_t& gyY, int16_t& gyZ) {
   Wire.beginTransmission(MPU_ADDR);
   Wire.write(0x43);                     // starting with register 0x43
   Wire.endTransmission(false);
@@ -242,7 +320,19 @@ void CustomMPU6050Reader::recordGyroData(float& rateRoll, float& ratePitch, floa
   gyX = Wire.read()<<8 | Wire.read();   // 0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
   gyY = Wire.read()<<8 | Wire.read();   // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
   gyZ = Wire.read()<<8 | Wire.read();   // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
+}
 
+/* 
+   Computation of exerted roll, pitch and yaw rates from gyroscope measurements.
+*/
+void CustomMPU6050Reader::recordGyroRates(float& rateRoll, float& ratePitch, float& rateYaw) {
+  int16_t gyX, gyY, gyZ;
+  readGyroData(gyX, gyY, gyZ);
+  if (isCalibrated()) {
+    gyX -= gyroXOffset;
+    gyY -= gyroYOffset;
+    gyZ -= gyroZOffset;
+  }
   processGyroData(rateRoll, ratePitch, rateYaw, gyX, gyY, gyZ);
 }
 
@@ -259,43 +349,16 @@ void CustomMPU6050Reader::recordGyroData(float& rateRoll, float& ratePitch, floa
 */
 void CustomMPU6050Reader::processGyroData(float& rateRoll, float& ratePitch, float& rateYaw,
                                           int16_t gyX, int16_t gyY, int16_t gyZ) {
-  float lsb_sens;
-
-  switch (GY_RANGE) {
-    case 0:
-      lsb_sens = 131.0;
-      break;
-    case 1:
-      lsb_sens = 65.5;
-      break;
-    case 2:
-      lsb_sens = 32.8;
-      break;
-    case 3:
-      lsb_sens = 16.4;
-      break;
-    default:
-      lsb_sens = 131.0;
-  }
-
-  rateRoll = (float)(gyX) / lsb_sens;
-  ratePitch = (float)(gyY) / lsb_sens;
-  rateYaw = (float)(gyZ) / lsb_sens;
-
-  if (calibrated) {
-    rateRoll -= gyroXOffset;
-    ratePitch -= gyroYOffset;
-    rateYaw -= gyroZOffset;
-  }
+  rateRoll = (float)(gyX) / gyroLSBSens;
+  ratePitch = (float)(gyY) / gyroLSBSens;
+  rateYaw = (float)(gyZ) / gyroLSBSens;
 }
 
 /* Accelerometer Measurements Section 4.17 in the Register Map datasheet
     Measurements are stored in registers 3B - 40.
     Note: each measurement is broken up into High and Low bytes.
 */
-void CustomMPU6050Reader::recordAccelData(float& gForceX, float& gForceY, float& gForceZ) {
-  int16_t acX, acY, acZ;
-
+void CustomMPU6050Reader::readAccelData(int16_t& acX, int16_t& acY, int16_t& acZ) {
   Wire.beginTransmission(MPU_ADDR);
   Wire.write(0x3B);                     // starting with register 0x3B (ACCEL_XOUT_H)
   Wire.endTransmission(false);
@@ -303,7 +366,19 @@ void CustomMPU6050Reader::recordAccelData(float& gForceX, float& gForceY, float&
   acX = Wire.read()<<8 | Wire.read();   // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)
   acY = Wire.read()<<8 | Wire.read();   // Ox3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
   acZ = Wire.read()<<8 | Wire.read();   // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
+}
 
+/*
+   Computation of exerted g forces from accelerometer measurements.
+*/
+void CustomMPU6050Reader::recordAccelRates(float& gForceX, float& gForceY, float& gForceZ) {
+  int16_t acX, acY, acZ;
+  readAccelData(acX, acY, acZ);
+  if (isCalibrated()) {
+    acX -= accXOffset;
+    acY -= accYOffset;
+    acZ -= accZOffset;
+  }
   processAccelData(gForceX, gForceY, gForceZ, acX, acY, acZ);
 }
 
@@ -320,34 +395,9 @@ void CustomMPU6050Reader::recordAccelData(float& gForceX, float& gForceY, float&
 */
 void CustomMPU6050Reader::processAccelData(float& gForceX, float& gForceY, float& gForceZ,
                                            int16_t acX, int16_t acY, int16_t acZ) {
-  float lsb_sens;
-
-  switch (AC_RANGE) {
-    case 0:
-      lsb_sens = 16384.0;
-      break;
-    case 1:
-      lsb_sens = 8192.0;
-      break;
-    case 2:
-      lsb_sens = 4096.0;
-      break;
-    case 3:
-      lsb_sens = 2048.0;
-      break;
-    default:
-      lsb_sens = 16384.0;
-  }
-
-  gForceX = (float)(acX) / lsb_sens;
-  gForceY = (float)(acY) / lsb_sens;
-  gForceZ = (float)(acZ) / lsb_sens;
-
-  if (calibrated) {
-    gForceX -= accXOffset;
-    gForceY -= accYOffset;
-    gForceZ -= accZOffset;
-  }
+  gForceX = (float)(acX) / accLSBSens;
+  gForceY = (float)(acY) / accLSBSens;
+  gForceZ = (float)(acZ) / accLSBSens;
 }
 
 /*
