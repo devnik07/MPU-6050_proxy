@@ -63,3 +63,6 @@ After that, run the corresponding run PlatformIO environment in your selected mo
 After the corresponding run sketch was successfully uploaded, locate the visualization python script in `visualization/MPUVisualization/main.py` and run this script
 (remember to set the correct port). A window showing a model of the Arduino + MPU-6050 setup should be displayed and the physical movements should be visualized.
 
+### Change modes
+If you want to change the mode run the `resetCalibration` PlatformIO environment and then continue with the other mode upon the **Calibration** subsection. 
+
