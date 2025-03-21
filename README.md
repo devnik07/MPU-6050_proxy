@@ -66,3 +66,5 @@ After the corresponding run sketch was successfully uploaded, locate the visuali
 ### Change modes
 If you want to change the mode run the `resetCalibration` PlatformIO environment and then continue with the other mode upon the **Calibration** subsection. 
 
+## Example Usage
+[![IMAGE ALT TEXT HERE](https://github.com/user-attachments/assets/9202f29c-ae02-4db3-bfd0-5c881df8b29f)](https://youtu.be/KI7Rz95XLvY)
