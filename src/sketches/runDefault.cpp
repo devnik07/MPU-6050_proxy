@@ -15,7 +15,7 @@ IIMUReader& reader = config.getReader();
 float roll = 0, pitch = 0, yaw = 0;
 
 void setup() {
-  Serial.begin(9600); // starts serial communication
+  Serial.begin(115200); // starts serial communication
   while (!Serial);
 
   reader.init();
