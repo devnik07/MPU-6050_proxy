@@ -32,6 +32,7 @@ class CustomMPU6050Reader : public IIMUReader {
         CustomMPU6050Reader(IeepromMPU& ieepromManager, ComputationOption compOpt);
         void init() override;
         void getRollPitchYaw(float& r, float& p, float& y) override;
+        void getRotationQuaternion(float& w, float& x, float& y, float& z) override;
         void calibrate() override;
         bool isCalibrated() override;
         void resetCalibrationFlag() override;

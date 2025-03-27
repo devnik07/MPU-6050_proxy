@@ -47,6 +47,18 @@ void MPU6050Reader::getRollPitchYaw(float& r, float& p, float& y) {
     }
 }
 
+void MPU6050Reader::getRotationQuaternion(float& w, float& x, float& y, float& z) {
+    Quaternion q;
+    if (mpu.dmpGetCurrentFIFOPacket(FIFOBuffer)) {
+        mpu.dmpGetQuaternion(&q, FIFOBuffer);
+
+        w = q.w;
+        x = q.x;
+        y = q.y;
+        z = q.z;
+    }
+}
+
 void MPU6050Reader::calibrate() {
     Serial.println("Starting Calibration.");
 

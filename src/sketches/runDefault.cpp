@@ -4,6 +4,7 @@
 #include "MPU6050Config.h"
 
 void printRPY();
+void printRotationQuaternion();
 
 const int LOOP_DELAY = 100;
 
@@ -13,6 +14,7 @@ IConfig& config = mpuConfig;
 IIMUReader& reader = config.getReader();
 
 float roll = 0, pitch = 0, yaw = 0;
+float w, x, y, z;
 
 void setup() {
   Serial.begin(115200); // starts serial communication
@@ -22,8 +24,10 @@ void setup() {
 }
 
 void loop() {
-  reader.getRollPitchYaw(roll, pitch, yaw);
-  printRPY();
+  //reader.getRollPitchYaw(roll, pitch, yaw);
+  //printRPY();
+  reader.getRotationQuaternion(w, x, y, z);
+  printRotationQuaternion();
   delay(LOOP_DELAY);
 }
 
@@ -36,4 +40,14 @@ void printRPY() {
   Serial.print(",");
   //Serial.print("Yaw:");
   Serial.println(yaw);
+}
+
+void printRotationQuaternion() {
+  Serial.print(w);
+  Serial.print(",");
+  Serial.print(x);
+  Serial.print(",");
+  Serial.print(y);
+  Serial.print(",");
+  Serial.println(z);
 }

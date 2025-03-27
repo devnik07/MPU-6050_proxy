@@ -53,6 +53,10 @@ void CustomMPU6050Reader::getRollPitchYaw(float& r, float& p, float& y) {
   }
 }
 
+void CustomMPU6050Reader::getRotationQuaternion(float& w, float& x, float& y, float& z) {
+  return;
+}
+
 void CustomMPU6050Reader::calibrate() {
   Serial.println("Starting calibration.");
 

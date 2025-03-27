@@ -15,6 +15,7 @@ class MPU6050Reader : public IIMUReader {
         MPU6050Reader(IeepromMPU& ieepromManager, MPU6050& mpu6050);
         void init() override;
         void getRollPitchYaw(float& r, float& p, float& y) override;
+        void getRotationQuaternion(float& w, float& x, float& y, float& z) override;
         void calibrate() override;
         bool isCalibrated() override;
         void resetCalibrationFlag() override;
