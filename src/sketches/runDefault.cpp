@@ -67,5 +67,5 @@ void printJoystickInputs() {
   Serial.print(",");
   Serial.print(joystickY);
   Serial.print(",");
-  Serial.println(switchOn);
+  Serial.print(switchOn ? 1 : 0);
 }
