@@ -21,7 +21,7 @@ int joystickX, joystickY;
 bool switchOn = false;
 
 void setup() {
-  Serial.begin(115200); // starts serial communication
+  Serial.begin(9600); // starts serial communication
   while (!Serial);
 
   reader.init();
