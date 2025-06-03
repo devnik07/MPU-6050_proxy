@@ -79,7 +79,7 @@ void MPU6050Reader::calibrate() {
 
         eepromManager.setCalibrationFlag();
 
-        Serial.println("Calibration completed.");
+        Serial.println("\nCalibration completed.");
     } else {
         Serial.print(F("DMP Initialization failed (code ")); // Print the error code
         Serial.print(devStatus);
