@@ -1,0 +1,162 @@
+#include "LSM9DS1Reader.h"
+
+LSM9DS1Reader::LSM9DS1Reader(Madgwick& filter) : filter(filter) {
+    gyroXOffset = 0;
+    gyroYOffset = 0;
+    gyroZOffset = 0;
+    accXOffset = 0;
+    accYOffset = 0;
+    accZOffset = 0;
+}
+
+void LSM9DS1Reader::init() {
+    if (!IMU.begin()) {
+        Serial.println("Failed to initialize IMU.");
+        while (true);   // Stop execution
+    } else {
+        if (isCalibrated()) {
+            loadCalibrationOffsets();
+        } else {
+            Serial.println("IMU not calibrated. Stopping execution.");
+            while (true);   // Stop execution
+        }
+    }
+}
+
+void LSM9DS1Reader::getRollPitchYaw(float& r, float& p, float& y) {
+    float gForceX, gForceY, gForceZ; 
+    float rateRoll, ratePitch, rateYaw;
+    float mX, mY, mZ;
+
+    if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable() && IMU.magneticFieldAvailable()) {
+        IMU.readAcceleration(gForceX, gForceY, gForceZ);
+        IMU.readGyroscope(rateRoll, ratePitch, rateYaw);
+        IMU.readMagneticField(mX, mY, mZ);
+
+        if (isCalibrated()) {
+            gForceX -= accXOffset;
+            gForceY -= accYOffset;
+            gForceZ -= accZOffset;
+            rateRoll -= gyroXOffset;
+            ratePitch -= gyroYOffset;
+            rateYaw -= gyroZOffset;
+        }
+
+        filter.update(rateRoll, ratePitch, rateYaw,
+                      gForceX, gForceY, gForceZ, 
+                      mX, mY, mZ);
+        r = filter.getRoll();
+        p = filter.getPitch();
+        y = filter.getYaw();
+    }
+}
+
+void LSM9DS1Reader::getRotationQuaternion(float& w, float& x, float& y, float& z) {
+    float gForceX, gForceY, gForceZ; 
+    float rateRoll, ratePitch, rateYaw;
+    float mX, mY, mZ;
+
+    if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable() && IMU.magneticFieldAvailable()) {
+        IMU.readAcceleration(gForceX, gForceY, gForceZ);
+        IMU.readGyroscope(rateRoll, ratePitch, rateYaw);
+        IMU.readMagneticField(mX, mY, mZ);
+
+        filter.update(rateRoll, ratePitch, rateYaw,
+                      gForceX, gForceY, gForceZ, 
+                      mX, mY, mZ);
+        float roll = filter.getRollRadians();
+        float pitch = filter.getPitchRadians();
+        float yaw = filter.getYawRadians();
+
+        float cr = cos(roll * 0.5);
+        float sr = sin(roll * 0.5);
+        float cp = cos(pitch * 0.5);
+        float sp = sin(pitch * 0.5);
+        float cy = cos(yaw * 0.5);
+        float sy = sin(yaw * 0.5);
+
+        w = cr*cp*cy + sr*sp*sy;
+        x = sr*cp*cy - cr*sp*sy;
+        y = cr*sp*cy + sr*cp*sy;
+        z = cr*cp*sy - sr*sp*cy;
+    }
+}
+
+void LSM9DS1Reader::calibrate() {
+    Serial.println("Starting calibration.");
+
+    if (!IMU.begin()) {
+        Serial.println("Failed to initialize IMU.");
+        while (true);   // Stop execution
+    }
+
+    calibrateGyro();
+    calibrateAccel();
+    // TODO: calibrate magnetometer
+
+    // TODO: persist offset values
+
+    Serial.println("Calibration completed.");
+}
+
+bool LSM9DS1Reader::isCalibrated() {
+    // TODO: Implement!
+    return true;
+}
+
+void LSM9DS1Reader::resetCalibrationFlag() {
+    // TODO: Implement!
+    return;
+}
+
+void LSM9DS1Reader::loadCalibrationOffsets() {
+    // TODO: Implement!
+    return;
+}
+
+/*
+  Computes offset values for the Gyroscope.
+*/
+void LSM9DS1Reader::calibrateGyro() {
+    Serial.println("Calibrating Accelerometer ...");
+
+    int numSamples = 2000;
+    float rateRoll, ratePitch, rateYaw;
+
+    for (int i = 0; i < numSamples; i++) {
+        IMU.readGyroscope(rateRoll, ratePitch, rateYaw);
+        gyroXOffset += rateRoll;
+        gyroYOffset += ratePitch;
+        gyroZOffset += rateYaw;
+        delay(1);
+    }
+
+    gyroXOffset /= numSamples;
+    gyroYOffset /= numSamples;
+    gyroZOffset /= numSamples;
+
+    Serial.println("Gyroscope Calibration completed.");
+}
+
+/*
+  Compute offset values for the Accelerometer.
+*/
+void LSM9DS1Reader::calibrateAccel() {
+    Serial.println("Calibrating Accelerometer ...");
+
+    int numSamples = 2000;
+    float gForceX, gForceY, gForceZ;
+
+    for (int i = 0; i < numSamples; i++) {
+        IMU.readAcceleration(gForceX, gForceY, gForceZ);
+        accXOffset += gForceX;
+        accYOffset += gForceY;
+        accZOffset += gForceZ;
+    }
+
+    accXOffset /= numSamples;
+    accYOffset /= numSamples;
+    accZOffset = (accZOffset / numSamples) - 1;
+
+    Serial.println("Accelerometer Calibration completed.");
+}
