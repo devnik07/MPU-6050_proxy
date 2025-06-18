@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IIMUReader.h"
-#include "IeepromMPU.h"
+#include "IStorageManager.h"
 #include <stdint.h>
 
 const int MPU_ADDR = 0x68;              // I2C address of the MPU-6050
@@ -21,7 +21,7 @@ enum class ComputationOption {
 
 class CustomMPU6050Reader : public IIMUReader {
     private:
-        IeepromMPU& eepromManager;
+        IStorageManager<int16_t>& eepromManager;
         float gyroLSBSens, accLSBSens;
         float gyroXOffset, gyroYOffset, gyroZOffset;
         float accXOffset, accYOffset, accZOffset;
@@ -29,7 +29,7 @@ class CustomMPU6050Reader : public IIMUReader {
         const ComputationOption computationOption;
 
     public:
-        CustomMPU6050Reader(IeepromMPU& ieepromManager, ComputationOption compOpt);
+        CustomMPU6050Reader(IStorageManager<int16_t>& ieepromManager, ComputationOption compOpt);
         void init() override;
         void getRollPitchYaw(float& r, float& p, float& y) override;
         void getRotationQuaternion(float& w, float& x, float& y, float& z) override;

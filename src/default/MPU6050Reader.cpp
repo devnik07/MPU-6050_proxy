@@ -1,8 +1,7 @@
 #include "MPU6050Reader.h"
-#include "IeepromMPU.h"
 
-MPU6050Reader::MPU6050Reader(IeepromMPU& ieeprom, MPU6050& mpu6050)
-                : eepromManager(ieeprom), mpu(mpu6050) {}
+MPU6050Reader::MPU6050Reader(IStorageManager<int16_t>& ieepromManager, MPU6050& mpu6050)
+                : eepromManager(ieepromManager), mpu(mpu6050) {}
 
 void MPU6050Reader::init() {
     uint8_t devStatus = setupMPU();

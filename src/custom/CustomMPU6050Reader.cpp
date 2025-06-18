@@ -3,7 +3,7 @@
 #include <Wire.h>
 #include <Arduino.h>
 
-CustomMPU6050Reader::CustomMPU6050Reader(IeepromMPU& ieepromManager, ComputationOption compOpt) 
+CustomMPU6050Reader::CustomMPU6050Reader(IStorageManager<int16_t>& ieepromManager, ComputationOption compOpt) 
                                         : eepromManager(ieepromManager), computationOption(compOpt) {
   gyroXOffset = 0;
   gyroYOffset = 0;

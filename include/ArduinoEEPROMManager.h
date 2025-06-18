@@ -1,8 +1,8 @@
 #pragma once
 
-#include "IeepromMPU.h"
+#include "IStorageManager.h"
 
-class ArduinoEEPROMManager : public IeepromMPU {
+class ArduinoEEPROMManager : public IStorageManager<int16_t> {
     private:
         const int ADDR_CALIBRATION_FLAG = 0;
 
