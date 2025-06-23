@@ -1,6 +1,7 @@
 #include "LSM9DS1Reader.h"
 
-LSM9DS1Reader::LSM9DS1Reader(Madgwick& filter) : filter(filter) {
+LSM9DS1Reader::LSM9DS1Reader(IStorageManager<float>& iflashManager, Madgwick& filter)
+                            : flashManager(iflashManager), filter(filter) {
     gyroXOffset = 0;
     gyroYOffset = 0;
     gyroZOffset = 0;
@@ -17,8 +18,7 @@ void LSM9DS1Reader::init() {
         if (isCalibrated()) {
             loadCalibrationOffsets();
         } else {
-            Serial.println("IMU not calibrated. Stopping execution.");
-            while (true);   // Stop execution
+            calibrate();
         }
     }
 }
@@ -85,33 +85,58 @@ void LSM9DS1Reader::getRotationQuaternion(float& w, float& x, float& y, float& z
 void LSM9DS1Reader::calibrate() {
     Serial.println("Starting calibration.");
 
-    if (!IMU.begin()) {
-        Serial.println("Failed to initialize IMU.");
-        while (true);   // Stop execution
-    }
-
     calibrateGyro();
     calibrateAccel();
     // TODO: calibrate magnetometer
 
-    // TODO: persist offset values
+    // Save offsets
+    flashManager.setXGyroOffset(gyroXOffset);
+    flashManager.setYGyroOffset(gyroYOffset);
+    flashManager.setZGyroOffset(gyroZOffset);
+
+    flashManager.setXAccOffset(accXOffset);
+    flashManager.setYAccOffset(accYOffset);
+    flashManager.setZAccOffset(accZOffset);
+
+    flashManager.setCalibrationFlag();
 
     Serial.println("Calibration completed.");
 }
 
 bool LSM9DS1Reader::isCalibrated() {
-    // TODO: Implement!
-    return true;
+    return flashManager.getCalibrationFlag();
 }
 
 void LSM9DS1Reader::resetCalibrationFlag() {
-    // TODO: Implement!
-    return;
+    flashManager.resetCalibrationFlag();
+    Serial.println("Calibration flag reset.");
 }
 
 void LSM9DS1Reader::loadCalibrationOffsets() {
-    // TODO: Implement!
-    return;
+    Serial.println("Loading Calibration Offsets.");
+
+    gyroXOffset = flashManager.getXGyroOffset();
+    gyroYOffset = flashManager.getYGyroOffset();
+    gyroZOffset = flashManager.getZGyroOffset();
+    
+    accXOffset = flashManager.getXAccOffset();
+    accYOffset = flashManager.getYAccOffset();
+    accZOffset = flashManager.getZAccOffset();
+
+    Serial.print("Acc X: ");
+    Serial.println(accXOffset);
+    Serial.print("Acc Y: ");
+    Serial.println(accYOffset);
+    Serial.print("Acc Z: ");
+    Serial.println(accZOffset);
+    Serial.print("Gyro X: ");
+    Serial.println(gyroXOffset);
+    Serial.print("Gyro Y: ");
+    Serial.println(gyroYOffset);
+    Serial.print("Gyro Z: ");
+    Serial.println(gyroZOffset);
+
+    Serial.println("Calibration Offsets loaded.");
 }
 
 /*
