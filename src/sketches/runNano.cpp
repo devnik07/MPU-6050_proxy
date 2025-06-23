@@ -30,10 +30,14 @@ void setup() {
 
 void loop() {
     reader.getRotationQuaternion(w, x, y, z);
-    printRotationQuaternion();
-
     JoystickReader::getInputs(joystickX, joystickY, switchOn);
-    printJoystickInputs();
+
+    if (switchOn) {
+      reader.calibrate();
+    } else {
+      printRotationQuaternion();
+      printJoystickInputs();
+    }
 
     delay(LOOP_DELAY);
 }
