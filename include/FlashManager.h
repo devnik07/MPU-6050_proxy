@@ -11,6 +11,9 @@ class FlashManager : public IStorageManager<float> {
         static constexpr const char* KEY_X_ACC_OFFSET = "/kv/x_acc_offset";
         static constexpr const char* KEY_Y_ACC_OFFSET = "/kv/y_acc_offset";
         static constexpr const char* KEY_Z_ACC_OFFSET = "/kv/z_acc_offset";
+        static constexpr const char* KEY_X_MAG_OFFSET = "/kv/x_mag_offset";
+        static constexpr const char* KEY_Y_MAG_OFFSET = "/kv/y_mag_offset";
+        static constexpr const char* KEY_Z_MAG_OFFSET = "/kv/z_mag_offset";
 
     public:
         virtual float getXGyroOffset() override;
@@ -19,6 +22,9 @@ class FlashManager : public IStorageManager<float> {
         virtual float getXAccOffset() override;
         virtual float getYAccOffset() override;
         virtual float getZAccOffset() override;
+        virtual float getXMagOffset() override;
+        virtual float getYMagOffset() override;
+        virtual float getZMagOffset() override;
 
         virtual void setXGyroOffset(float offset) override;
         virtual void setYGyroOffset(float offset) override;
@@ -26,6 +32,9 @@ class FlashManager : public IStorageManager<float> {
         virtual void setXAccOffset(float offset) override;
         virtual void setYAccOffset(float offset) override;
         virtual void setZAccOffset(float offset) override;
+        virtual void setXMagOffset(float offset) override;
+        virtual void setYMagOffset(float offset) override;
+        virtual void setZMagOffset(float offset) override;
 
         virtual bool getCalibrationFlag() override;
         virtual void setCalibrationFlag() override;

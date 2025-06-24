@@ -22,6 +22,9 @@ class ArduinoEEPROMManager : public IStorageManager<int16_t> {
         virtual int16_t getXAccOffset() override;
         virtual int16_t getYAccOffset() override;
         virtual int16_t getZAccOffset() override;
+        virtual int16_t getXMagOffset() override;
+        virtual int16_t getYMagOffset() override;
+        virtual int16_t getZMagOffset() override;
 
         virtual void setXGyroOffset(int16_t offset) override;
         virtual void setYGyroOffset(int16_t offset) override;
@@ -29,6 +32,9 @@ class ArduinoEEPROMManager : public IStorageManager<int16_t> {
         virtual void setXAccOffset(int16_t offset) override;
         virtual void setYAccOffset(int16_t offset) override;
         virtual void setZAccOffset(int16_t offset) override;
+        virtual void setXMagOffset(int16_t offset) override;
+        virtual void setYMagOffset(int16_t offset) override;
+        virtual void setZMagOffset(int16_t offset) override;
 
         virtual bool getCalibrationFlag() override;
         virtual void setCalibrationFlag() override;

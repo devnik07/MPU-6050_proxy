@@ -33,6 +33,18 @@ int16_t ArduinoEEPROMManager::getZAccOffset() {
     return readVal<int16_t>(ADDR_Z_ACC_OFFSET);
 }
 
+int16_t ArduinoEEPROMManager::getXMagOffset() {
+    return 0; // Not implemented
+}
+
+int16_t ArduinoEEPROMManager::getYMagOffset() {
+    return 0; // Not implemented
+}
+
+int16_t ArduinoEEPROMManager::getZMagOffset() {
+    return 0; // Not implemented
+}
+
 void ArduinoEEPROMManager::setXGyroOffset(int16_t offset) {
     EEPROM.put(ADDR_X_GYRO_OFFSET, offset);
 }
@@ -55,6 +67,18 @@ void ArduinoEEPROMManager::setYAccOffset(int16_t offset) {
 
 void ArduinoEEPROMManager::setZAccOffset(int16_t offset) {
     EEPROM.put(ADDR_Z_ACC_OFFSET, offset);
+}
+
+void ArduinoEEPROMManager::setXMagOffset(int16_t offset) {
+    return; // Not implemented
+}
+
+void ArduinoEEPROMManager::setYMagOffset(int16_t offset) {
+    return; // Not implemented
+}
+
+void ArduinoEEPROMManager::setZMagOffset(int16_t offset) {
+    return; // Not implemented
 }
 
 bool ArduinoEEPROMManager::getCalibrationFlag() {
