@@ -12,6 +12,7 @@ class LSM9DS1Reader : public IIMUReader {
         Madgwick& filter;
         float gyroXOffset, gyroYOffset, gyroZOffset;
         float accXOffset, accYOffset, accZOffset;
+        float magXOffset, magYOffset, magZOffset;
 
     public:
         LSM9DS1Reader(IStorageManager<float>& iflashManager, Madgwick& filter);
@@ -25,5 +26,6 @@ class LSM9DS1Reader : public IIMUReader {
     private:
         void calibrateGyro();
         void calibrateAccel();
+        void calibrateMag();
         void loadCalibrationOffsets();
 };

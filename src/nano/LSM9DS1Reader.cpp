@@ -8,6 +8,9 @@ LSM9DS1Reader::LSM9DS1Reader(IStorageManager<float>& iflashManager, Madgwick& fi
     accXOffset = 0;
     accYOffset = 0;
     accZOffset = 0;
+    magXOffset = 0;
+    magYOffset = 0;
+    magZOffset = 0;
 }
 
 void LSM9DS1Reader::init() {
@@ -40,6 +43,9 @@ void LSM9DS1Reader::getRollPitchYaw(float& r, float& p, float& y) {
             rateRoll -= gyroXOffset;
             ratePitch -= gyroYOffset;
             rateYaw -= gyroZOffset;
+            mX -= magXOffset;
+            mY -= magYOffset;
+            mZ -= magZOffset;
         }
 
         filter.update(rateRoll, ratePitch, rateYaw,
@@ -60,6 +66,18 @@ void LSM9DS1Reader::getRotationQuaternion(float& w, float& x, float& y, float& z
         IMU.readAcceleration(gForceX, gForceY, gForceZ);
         IMU.readGyroscope(rateRoll, ratePitch, rateYaw);
         IMU.readMagneticField(mX, mY, mZ);
+
+        if (isCalibrated()) {
+            gForceX -= accXOffset;
+            gForceY -= accYOffset;
+            gForceZ -= accZOffset;
+            rateRoll -= gyroXOffset;
+            ratePitch -= gyroYOffset;
+            rateYaw -= gyroZOffset;
+            mX -= magXOffset;
+            mY -= magYOffset;
+            mZ -= magZOffset;
+        }
 
         filter.update(rateRoll, ratePitch, rateYaw,
                       gForceX, gForceY, gForceZ, 
@@ -87,7 +105,7 @@ void LSM9DS1Reader::calibrate() {
 
     calibrateGyro();
     calibrateAccel();
-    // TODO: calibrate magnetometer
+    calibrateMag();
 
     // Save offsets
     flashManager.setXGyroOffset(gyroXOffset);
@@ -97,6 +115,10 @@ void LSM9DS1Reader::calibrate() {
     flashManager.setXAccOffset(accXOffset);
     flashManager.setYAccOffset(accYOffset);
     flashManager.setZAccOffset(accZOffset);
+
+    flashManager.setXMagOffset(magXOffset);
+    flashManager.setYMagOffset(magYOffset);
+    flashManager.setZMagOffset(magZOffset);
 
     flashManager.setCalibrationFlag();
 
@@ -123,6 +145,10 @@ void LSM9DS1Reader::loadCalibrationOffsets() {
     accYOffset = flashManager.getYAccOffset();
     accZOffset = flashManager.getZAccOffset();
 
+    magXOffset = flashManager.getXMagOffset();
+    magYOffset = flashManager.getYMagOffset();
+    magZOffset = flashManager.getZMagOffset();
+
     Serial.print("Acc X: ");
     Serial.println(accXOffset);
     Serial.print("Acc Y: ");
@@ -135,6 +161,12 @@ void LSM9DS1Reader::loadCalibrationOffsets() {
     Serial.println(gyroYOffset);
     Serial.print("Gyro Z: ");
     Serial.println(gyroZOffset);
+    Serial.print("Mag X: ");
+    Serial.println(magXOffset);
+    Serial.print("Mag Y: ");
+    Serial.println(magYOffset);
+    Serial.print("Mag Z: ");
+    Serial.println(magZOffset);
 
     Serial.println("Calibration Offsets loaded.");
 }
@@ -177,6 +209,7 @@ void LSM9DS1Reader::calibrateAccel() {
         accXOffset += gForceX;
         accYOffset += gForceY;
         accZOffset += gForceZ;
+        delay(1);
     }
 
     accXOffset /= numSamples;
@@ -184,4 +217,36 @@ void LSM9DS1Reader::calibrateAccel() {
     accZOffset = (accZOffset / numSamples) - 1;
 
     Serial.println("Accelerometer Calibration completed.");
+}
+
+void LSM9DS1Reader::calibrateMag() {
+    Serial.println("Calibrating Magnetometer ...");
+
+    int numSamples = 2000;
+    float mX, mY, mZ;
+    float mMinX, mMinY, mMinZ;
+    float mMaxX, mMaxY, mMaxZ;
+
+    mMinX = mMinY = mMinZ = 1e6;
+    mMaxX = mMaxY = mMaxZ = -1e6;
+
+    for (int i = 0; i < numSamples; i++) {
+        IMU.readMagneticField(mX, mY, mZ);
+
+        if (mX < mMinX) mMinX = mX;
+        if (mY < mMinY) mMinY = mY;
+        if (mZ < mMinZ) mMinZ = mZ;
+
+        if (mX > mMaxX) mMaxX = mX;
+        if (mY > mMaxY) mMaxY = mY;
+        if (mZ > mMaxZ) mMaxZ = mZ;
+
+        delay(1);
+    }
+
+    magXOffset = (mMinX + mMaxX) / 2;
+    magYOffset = (mMinY + mMaxY) / 2;
+    magZOffset = (mMinZ + mMaxZ) / 2;
+
+    Serial.println("Magnetometer calibration completed.");
 }
