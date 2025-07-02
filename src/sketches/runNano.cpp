@@ -44,7 +44,7 @@ IIMUReader& reader = config.getReader();
 BLEService caxeService(BLE_UUID_SERVICE);
 BLECharacteristic orientationCharacteristic(BLE_UUID_ORIENTATION, BLERead | BLENotify, sizeof orientationData.bytes);
 BLECharacteristic joystickCharacteristic(BLE_UUID_JOYSTICK, BLERead | BLENotify, sizeof joystickData.bytes);
-BLEBoolCharacteristic calibrationCharacteristic(BLE_UUID_CALIBRATION, BLERead);
+BLEBoolCharacteristic calibrationCharacteristic(BLE_UUID_CALIBRATION, BLERead | BLENotify);
 
 float roll = 0, pitch = 0, yaw = 0;
 float w, x, y, z;
