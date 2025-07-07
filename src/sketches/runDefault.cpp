@@ -37,6 +37,10 @@ void loop() {
   JoystickReader::getInputs(joystickX, joystickY, switchOn);
   printJoystickInputs();
 
+  if (switchOn) {
+    reader.calibrate();
+  }
+
   delay(LOOP_DELAY);
 }
 

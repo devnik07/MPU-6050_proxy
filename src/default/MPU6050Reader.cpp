@@ -12,8 +12,7 @@ void MPU6050Reader::init() {
             Serial.println(F("Enabling DMP..."));
             mpu.setDMPEnabled(true);
         } else {
-            Serial.println("MPU not calibrated. Stopping execution.");
-            while (true);   // Stop execution 
+            calibrate();
         }
     } else {
         Serial.print(F("DMP Initialization failed (code ")); // Print the error code
@@ -59,27 +58,9 @@ void MPU6050Reader::getRotationQuaternion(float& w, float& x, float& y, float& z
 }
 
 void MPU6050Reader::calibrate() {
-    Serial.println("Starting Calibration.");
-
-    uint8_t devStatus = setupMPU();
-
-    if (devStatus == 0) {
-        mpu.CalibrateAccel(6);
-        mpu.CalibrateGyro(6);
-
-        // Save offsets
-        eepromManager.setXGyroOffset(mpu.getXGyroOffset());
-        eepromManager.setYGyroOffset(mpu.getYGyroOffset());
-        eepromManager.setZGyroOffset(mpu.getZGyroOffset());
-        
-        eepromManager.setXAccOffset(mpu.getXAccelOffset());
-        eepromManager.setYAccOffset(mpu.getYAccelOffset());
-        eepromManager.setZAccOffset(mpu.getZAccelOffset());
-
-        eepromManager.setCalibrationFlag();
-
-        Serial.println("\nCalibration completed.");
-    } else {
+    uint8_t devStatus;
+    devStatus = mpu.dmpInitialize();
+    if (devStatus != 0) {
         Serial.print(F("DMP Initialization failed (code ")); // Print the error code
         Serial.print(devStatus);
         Serial.println(F(")"));
@@ -87,6 +68,27 @@ void MPU6050Reader::calibrate() {
         // 2 = DMP configuration updates failed
         while(true);    // Stop execution
     }
+    
+    Serial.println("Starting Calibration.");
+
+    mpu.CalibrateAccel(6);
+    mpu.CalibrateGyro(6);
+
+    // Save offsets
+    eepromManager.setXGyroOffset(mpu.getXGyroOffset());
+    eepromManager.setYGyroOffset(mpu.getYGyroOffset());
+    eepromManager.setZGyroOffset(mpu.getZGyroOffset());
+    
+    eepromManager.setXAccOffset(mpu.getXAccelOffset());
+    eepromManager.setYAccOffset(mpu.getYAccelOffset());
+    eepromManager.setZAccOffset(mpu.getZAccelOffset());
+
+    eepromManager.setCalibrationFlag();
+
+    Serial.println(F("\nEnabling DMP..."));
+    mpu.setDMPEnabled(true);
+
+    Serial.println("Calibration completed.");
 }
 
 bool MPU6050Reader::isCalibrated() {
