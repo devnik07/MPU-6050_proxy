@@ -2,6 +2,7 @@
 
 #include "KVStore.h"
 #include "kvstore_global_api.h"
+#include "mbed_error.h"
 
 /**
  * Read values of various data types.
@@ -9,7 +10,11 @@
 template <typename T>
 void FlashManager::get(const char* key, T& value) {
     size_t actual_size = 0;
-    kv_get(key, &value, sizeof(T), &actual_size);
+    int status = kv_get(key, &value, sizeof(T), &actual_size);
+    if (status != MBED_SUCCESS) {
+        value = 0;
+        put(key, 0);
+    }
 }
 
 /**
