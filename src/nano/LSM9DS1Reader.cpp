@@ -11,6 +11,7 @@ LSM9DS1Reader::LSM9DS1Reader(IStorageManager<float>& iflashManager, Madgwick& fi
     magXOffset = 0;
     magYOffset = 0;
     magZOffset = 0;
+    yawReference = 0;
 }
 
 void LSM9DS1Reader::init() {
@@ -24,7 +25,7 @@ void LSM9DS1Reader::init() {
             calibrate();
         }
     }
-    filter.begin(IMU.accelerationSampleRate());
+    setupFilter();
 }
 
 void LSM9DS1Reader::getRollPitchYaw(float& r, float& p, float& y) {
@@ -69,6 +70,10 @@ void LSM9DS1Reader::getRollPitchYaw(float& r, float& p, float& y) {
     r = filter.getRoll();
     p = filter.getPitch();
     y = filter.getYaw();
+
+    if (yawReference != 0) {
+        y -= yawReference * RAD_TO_DEG;
+    }
 }
 
 void LSM9DS1Reader::getRotationQuaternion(float& w, float& x, float& y, float& z) {
@@ -114,6 +119,10 @@ void LSM9DS1Reader::getRotationQuaternion(float& w, float& x, float& y, float& z
     float pitch = filter.getPitchRadians();
     float yaw = filter.getYawRadians();
 
+    if (yawReference != 0) {
+        yaw -= yawReference;
+    }
+
     float cr = cos(roll * 0.5);
     float sr = sin(roll * 0.5);
     float cp = cos(pitch * 0.5);
@@ -150,6 +159,8 @@ void LSM9DS1Reader::calibrate() {
     flashManager.setCalibrationFlag();
 
     Serial.println("Calibration completed.");
+    
+    setupFilter();
 }
 
 bool LSM9DS1Reader::isCalibrated() {
@@ -196,6 +207,8 @@ void LSM9DS1Reader::loadCalibrationOffsets() {
     Serial.println(magZOffset);
 
     Serial.println("Calibration Offsets loaded.");
+
+    setupFilter();
 }
 
 /*
@@ -249,7 +262,7 @@ void LSM9DS1Reader::calibrateAccel() {
 void LSM9DS1Reader::calibrateMag() {
     Serial.println("Calibrating Magnetometer ...");
 
-    int numSamples = 5000;
+    int numSamples = 10000;
     float mX, mY, mZ;
     float mMinX, mMinY, mMinZ;
     float mMaxX, mMaxY, mMaxZ;
@@ -276,4 +289,21 @@ void LSM9DS1Reader::calibrateMag() {
     magZOffset = (mMinZ + mMaxZ) / 2;
 
     Serial.println("Magnetometer calibration completed.");
+}
+
+/* 
+    Warm up the filter since the initial heading takes some time to settle.
+*/
+void LSM9DS1Reader::setupFilter() {
+    filter.begin(IMU.accelerationSampleRate());
+    yawReference = 0;
+
+    float tempRoll, tempPitch, tempYaw;
+    for (int i = 0; i < 2000; i++) {
+        getRollPitchYaw(tempRoll, tempPitch, tempYaw);
+    }
+ 
+    /* Convert yaw reference angle to radians and compensate for 180° rotation 
+    by the madgwick filter. */ 
+    yawReference = (tempYaw - 180.0f) * DEG_TO_RAD;
 }
