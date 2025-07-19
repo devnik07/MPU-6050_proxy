@@ -35,6 +35,7 @@ union joystick_data
 union joystick_data joystickData;
 
 const int SAMPLE_RATE = 119;
+const int LOOP_DELAY = 100;
 
 Madgwick filter;
 LSM9DS1Config imuConfig(filter);
@@ -51,7 +52,6 @@ float w, x, y, z;
 int joystickX, joystickY;
 bool switchOn = false;
 
-const int LOOP_DELAY = 100;
 unsigned long microsPerReading, microsPrevious;
 unsigned long microsNow;
 unsigned long prevPrint;
@@ -59,9 +59,6 @@ unsigned long prevPrint;
 void setup() {
     Serial.begin(9600); // starts serial communication
     while (!Serial);
-
-    reader.init();
-    JoystickReader::init();
 
     if (!BLE.begin()) {
       Serial.println("Starting Bluetooth® Low Energy module failed.");
@@ -79,6 +76,9 @@ void setup() {
     calibrationCharacteristic.setValue(false);
 
     BLE.advertise();
+
+    reader.init();
+    JoystickReader::init();
 
     microsPerReading = 1000000 / SAMPLE_RATE;
     microsPrevious = micros();
@@ -98,28 +98,28 @@ void loop() {
           JoystickReader::getInputs(joystickX, joystickY, switchOn);
 
           microsPrevious += microsPerReading;
-        }
 
-        if (millis() - prevPrint >= LOOP_DELAY) {
-          orientationData.quaternion[0] = w;
-          orientationData.quaternion[1] = x;
-          orientationData.quaternion[2] = y;
-          orientationData.quaternion[3] = z;
-          orientationCharacteristic.writeValue(orientationData.bytes, sizeof orientationData.bytes);
+          if (millis() - prevPrint >= LOOP_DELAY) {
+            orientationData.quaternion[0] = w;
+            orientationData.quaternion[1] = x;
+            orientationData.quaternion[2] = y;
+            orientationData.quaternion[3] = z;
+            orientationCharacteristic.writeValue(orientationData.bytes, sizeof orientationData.bytes);
 
-          joystickData.joystickInput[0] = joystickX;
-          joystickData.joystickInput[1] = joystickY;
-          joystickCharacteristic.writeValue(joystickData.bytes, sizeof joystickData.bytes);
+            joystickData.joystickInput[0] = joystickX;
+            joystickData.joystickInput[1] = joystickY;
+            joystickCharacteristic.writeValue(joystickData.bytes, sizeof joystickData.bytes);
 
-          calibrationCharacteristic.writeValue(switchOn);
+            calibrationCharacteristic.writeValue(switchOn);
 
-          printRotationQuaternion();
-          printJoystickInputs();
+            printRotationQuaternion();
+            printJoystickInputs();
 
-          if (switchOn) {
-            reader.calibrate();
+            if (switchOn) {
+              reader.calibrate();
+            }
+            prevPrint = millis();
           }
-          prevPrint = millis();
         }
       }
 

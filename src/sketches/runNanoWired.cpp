@@ -9,6 +9,7 @@ void printRotationQuaternion();
 void printJoystickInputs();
 
 const int SAMPLE_RATE = 119;
+const int LOOP_DELAY = 16;
 
 Madgwick filter;
 LSM9DS1Config imuConfig(filter);
@@ -20,7 +21,6 @@ float w, x, y, z;
 int joystickX, joystickY;
 bool switchOn = false;
 
-const int LOOP_DELAY = 100;
 unsigned long microsPerReading, microsPrevious;
 unsigned long microsNow;
 unsigned long prevPrint;
@@ -41,22 +41,22 @@ void loop() {
     microsNow = micros();
     if (microsNow - microsPrevious >= microsPerReading) {
       
-      //reader.getRollPitchYaw(roll, pitch, yaw);
-      reader.getRotationQuaternion(w, x, y, z);
+      reader.getRollPitchYaw(roll, pitch, yaw);
+      //reader.getRotationQuaternion(w, x, y, z);
       JoystickReader::getInputs(joystickX, joystickY, switchOn);
 
       microsPrevious += microsPerReading;
-    }
 
-    if (millis() - prevPrint >= LOOP_DELAY) {
-      //printRPY();
-      printRotationQuaternion();
-      printJoystickInputs();
+      if (millis() - prevPrint >= LOOP_DELAY) {
+        printRPY();
+        //printRotationQuaternion();
+        printJoystickInputs();
 
-      if (switchOn) {
-        reader.calibrate();
+        if (switchOn) {
+          reader.calibrate();
+        }
+        prevPrint = millis();
       }
-      prevPrint = millis();
     }
 }
 

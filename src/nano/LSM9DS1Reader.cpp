@@ -25,96 +25,23 @@ void LSM9DS1Reader::init() {
             calibrate();
         }
     }
-    setupFilter();
 }
 
 void LSM9DS1Reader::getRollPitchYaw(float& r, float& p, float& y) {
-    float gForceX, gForceY, gForceZ; 
-    float rateRoll, ratePitch, rateYaw;
-    float mX, mY, mZ;
-    float accX, accY, accZ;
-    float gyroX, gyroY, gyroZ;
+    updateFilter();
 
-    IMU.readAcceleration(gForceX, gForceY, gForceZ);
-    IMU.readGyroscope(rateRoll, ratePitch, rateYaw);
-    IMU.readMagneticField(mX, mY, mZ);
-
-    if (isCalibrated()) {
-        gForceX -= accXOffset;
-        gForceY -= accYOffset;
-        gForceZ -= accZOffset;
-        rateRoll -= gyroXOffset;
-        ratePitch -= gyroYOffset;
-        rateYaw -= gyroZOffset;
-        mX -= magXOffset;
-        mY -= magYOffset;
-        mZ -= magZOffset;
-    }
-
-    /*  
-        The AHRS expects the sensor raw values to be in the same right handed coordinate system.
-        Though, the LSM9DS1's accelerometer and gyroscope left handed coordinate system differs from
-        the right handed coordinate system of the magnetometer.
-        Hence, they have to be aligned.
-    */
-    gyroX = -ratePitch;
-    gyroY = -rateRoll;
-    gyroZ = rateYaw;
-    accX = -gForceY;
-    accY = -gForceX;
-    accZ = gForceZ;
-
-    filter.update(gyroX, gyroY, gyroZ,
-                  accX, accY, accZ,
-                  mX, mY, mZ);
     r = filter.getRoll();
     p = filter.getPitch();
     y = filter.getYaw();
 
     if (yawReference != 0) {
-        y -= yawReference * RAD_TO_DEG;
+        y -= (yawReference + PI) * RAD_TO_DEG;
     }
 }
 
 void LSM9DS1Reader::getRotationQuaternion(float& w, float& x, float& y, float& z) {
-    float gForceX, gForceY, gForceZ; 
-    float rateRoll, ratePitch, rateYaw;
-    float mX, mY, mZ;
-    float accX, accY, accZ;
-    float gyroX, gyroY, gyroZ;
+    updateFilter();
 
-    IMU.readAcceleration(gForceX, gForceY, gForceZ);
-    IMU.readGyroscope(rateRoll, ratePitch, rateYaw);
-    IMU.readMagneticField(mX, mY, mZ);
-
-    if (isCalibrated()) {
-        gForceX -= accXOffset;
-        gForceY -= accYOffset;
-        gForceZ -= accZOffset;
-        rateRoll -= gyroXOffset;
-        ratePitch -= gyroYOffset;
-        rateYaw -= gyroZOffset;
-        mX -= magXOffset;
-        mY -= magYOffset;
-        mZ -= magZOffset;
-    }
-
-    /*  
-        The AHRS expects the sensor raw values to be in the same right handed coordinate system.
-        Though, the LSM9DS1's accelerometer and gyroscope left handed coordinate system differs from
-        the right handed coordinate system of the magnetometer.
-        Hence, they have to be aligned.
-    */
-    gyroX = -ratePitch;
-    gyroY = -rateRoll;
-    gyroZ = rateYaw;
-    accX = -gForceY;
-    accY = -gForceX;
-    accZ = gForceZ;
-
-    filter.update(gyroX, gyroY, gyroZ,
-                  accX, accY, accZ,
-                  mX, mY, mZ);
     float roll = filter.getRollRadians();
     float pitch = filter.getPitchRadians();
     float yaw = filter.getYawRadians();
@@ -140,8 +67,8 @@ void LSM9DS1Reader::calibrate() {
     Serial.println("Starting calibration.");
 
     calibrateGyro();
-    calibrateAccel();
-    calibrateMag();
+    //calibrateAccel();
+    //calibrateMag();
 
     // Save offsets
     flashManager.setXGyroOffset(gyroXOffset);
@@ -295,15 +222,77 @@ void LSM9DS1Reader::calibrateMag() {
     Warm up the filter since the initial heading takes some time to settle.
 */
 void LSM9DS1Reader::setupFilter() {
+    Serial.println("Keep the controller steady and flat on a surface!");
     filter.begin(IMU.accelerationSampleRate());
-    yawReference = 0;
 
-    float tempRoll, tempPitch, tempYaw;
-    for (int i = 0; i < 2000; i++) {
-        getRollPitchYaw(tempRoll, tempPitch, tempYaw);
+    for (int i = 0; i < SETUP_TIME; i++) {
+        if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable()) {
+            updateFilter();
+        }
     }
  
-    /* Convert yaw reference angle to radians and compensate for 180° rotation 
-    by the madgwick filter. */ 
-    yawReference = (tempYaw - 180.0f) * DEG_TO_RAD;
+    yawReference = filter.getYawRadians();
+    Serial.println("Setup completed.");
+}
+
+void LSM9DS1Reader::updateFilter() {
+    float gForceX, gForceY, gForceZ; 
+    float rateRoll, ratePitch, rateYaw;
+    float mX, mY, mZ;
+
+    IMU.readAcceleration(gForceX, gForceY, gForceZ);
+    IMU.readGyroscope(rateRoll, ratePitch, rateYaw);
+    IMU.readMagneticField(mX, mY, mZ);
+
+    scaleIMU(rateRoll, ratePitch, rateYaw,
+             gForceX, gForceY, gForceZ,
+             mX, mY, mZ);
+
+    /*  
+        The AHRS expects the sensor raw values to be in the same right handed coordinate system.
+        Though, the LSM9DS1's accelerometer and gyroscope left handed coordinate system differs from
+        the right handed coordinate system of the magnetometer.
+        Hence, the gyroscope's and accelerometer's X-axis needs to be flipped in order to be aligned
+        with the magnetometer's coordinate system.
+    */
+    rateRoll = -rateRoll;
+    gForceX = -gForceX;
+    
+    filter.update(rateRoll, ratePitch, rateYaw,
+                  gForceX, gForceY, gForceZ,
+                  mX, mY, mZ);
+}
+
+void LSM9DS1Reader::scaleIMU(float& rateRoll, float& ratePitch, float& rateYaw,
+                             float& gForceX, float& gForceY, float& gForceZ,
+                             float& mX, float& mY, float& mZ) {
+    // Subtract gyroscope offsets
+    rateRoll -= gyroXOffset;
+    ratePitch -= gyroYOffset;
+    rateYaw -= gyroZOffset;
+
+    float temp[3] = {gForceX - H_ACC[0], gForceY - H_ACC[1], gForceZ - H_ACC[2]};
+    gForceX = S_ACC[0][0] * temp[0] + S_ACC[0][1] * temp[1] + S_ACC[0][2] * temp[2];
+    gForceY = S_ACC[1][0] * temp[0] + S_ACC[1][1] * temp[1] + S_ACC[1][2] * temp[2];
+    gForceZ = S_ACC[2][0] * temp[0] + S_ACC[2][1] * temp[1] + S_ACC[2][2] * temp[2];
+
+    // normalize accelerometer values
+    float mag = sqrt(gForceX*gForceX + gForceY*gForceY + gForceZ*gForceZ);
+    gForceX /= mag;
+    gForceY /= mag;
+    gForceZ /= mag;
+
+    // apply hard and soft iron offsets
+    temp[0] = mX - H_MAG[0];
+    temp[1] = mY - H_MAG[1];
+    temp[2] = mZ - H_MAG[2];
+    mX = S_MAG[0][0] * temp[0] + S_MAG[0][1] * temp[1] + S_MAG[0][2] * temp[2];
+    mY = S_MAG[1][0] * temp[0] + S_MAG[1][1] * temp[1] + S_MAG[1][2] * temp[2];
+    mZ = S_MAG[2][0] * temp[0] + S_MAG[2][1] * temp[1] + S_MAG[2][2] * temp[2];
+
+    // normalize magnetometer values
+    mag = sqrt(mX*mX + mY*mY + mZ*mZ);
+    mX /= mag;
+    mY /= mag;
+    mZ /= mag;
 }
