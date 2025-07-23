@@ -45,27 +45,15 @@ float FlashManager::getZGyroOffset() {
 }
 
 float FlashManager::getXAccOffset() {
-    return readVal<float>(KEY_X_ACC_OFFSET);
+    return 0;   // Not implemented
 }
 
 float FlashManager::getYAccOffset() {
-    return readVal<float>(KEY_Y_ACC_OFFSET);
+    return 0;   // Not implemented
 }
 
 float FlashManager::getZAccOffset() {
-    return readVal<float>(KEY_Z_ACC_OFFSET);
-}
-
-float FlashManager::getXMagOffset() {
-    return readVal<float>(KEY_X_MAG_OFFSET);
-}
-
-float FlashManager::getYMagOffset() {
-    return readVal<float>(KEY_Y_MAG_OFFSET);
-}
-
-float FlashManager::getZMagOffset() {
-    return readVal<float>(KEY_Z_MAG_OFFSET);
+    return 0;   // Not implemented
 }
 
 void FlashManager::setXGyroOffset(float offset) {
@@ -81,27 +69,15 @@ void FlashManager::setZGyroOffset(float offset) {
 }
 
 void FlashManager::setXAccOffset(float offset) {
-    put<float>(KEY_X_ACC_OFFSET, offset);
+    return; // Not implemented
 }
 
 void FlashManager::setYAccOffset(float offset) {
-    put<float>(KEY_Y_ACC_OFFSET, offset);
+    return; // Not implemented
 }
 
 void FlashManager::setZAccOffset(float offset) {
-    put<float>(KEY_Z_ACC_OFFSET, offset);
-}
-
-void FlashManager::setXMagOffset(float offset) {
-    put<float>(KEY_X_MAG_OFFSET, offset);
-}
-
-void FlashManager::setYMagOffset(float offset) {
-    put<float>(KEY_Y_MAG_OFFSET, offset);
-}
-
-void FlashManager::setZMagOffset(float offset) {
-    put<float>(KEY_Z_MAG_OFFSET, offset);
+    return; // Not implemented
 }
 
 bool FlashManager::getCalibrationFlag() {
